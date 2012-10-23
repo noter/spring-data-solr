@@ -19,7 +19,7 @@
     <spring.version>3.1.2.RELEASE</spring.version>
     <slf4j.version>1.7.1</slf4j.version>
     <commons-lang.version>2.6</commons-lang.version>
-    <solr.version>3.6.1</solr.version>
+    <es.version>0.19.10</es.version>
     <apache.httpcomponents.version>4.2</apache.httpcomponents.version>
     <spring.data-commons.version>1.4.0.RELEASE</spring.data-commons.version>
     <joda-time.version>2.1</joda-time.version>
@@ -161,42 +161,13 @@
       <version>${joda-time.version}</version>
     </dependency>
 
-    <!-- SOLR -->
+    <!-- ElasticSearch -->
     <dependency>
-      <artifactId>solr-solrj</artifactId>
-      <groupId>org.apache.solr</groupId>
-      <version>${solr.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <artifactId>commons-logging</artifactId>
-          <groupId>commons-logging</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>jcl-over-slf4j</artifactId>
-          <groupId>org.slf4j</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>commons-httpclient</artifactId>
-          <groupId>commons-httpclient</groupId>
-        </exclusion>
-      </exclusions>
+    	<groupId>org.elasticsearch</groupId>
+    	<artifactId>elasticsearch</artifactId>
+    	<version>${es.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.apache.solr</groupId>
-      <artifactId>solr-core</artifactId>
-      <version>${solr.version}</version>
-      <optional>true</optional>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+   
 
     <!-- LOGGING -->
     <dependency>
@@ -219,6 +190,11 @@
       <groupId>org.slf4j</groupId>
       <artifactId>jul-to-slf4j</artifactId>
       <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.slf4j</groupId>
+    	<artifactId>jcl-over-slf4j</artifactId>
+    	<version>${slf4j.version}</version>
     </dependency>
 
     <!-- CDI -->
@@ -271,13 +247,10 @@
       <version>${webbeans.version}</version>
       <scope>test</scope>
     </dependency>
-    
-    <!-- solr 4.x requires servlet api to run in embedded mode -->
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>servlet-api</artifactId>
-      <version>3.0-alpha-1</version>
-      <scope>test</scope>
+    	<groupId>com.fasterxml.jackson.core</groupId>
+    	<artifactId>jackson-databind</artifactId>
+    	<version>2.1.0</version>
     </dependency>
   </dependencies>
 

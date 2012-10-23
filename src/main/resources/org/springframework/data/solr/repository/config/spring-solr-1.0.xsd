@@ -17,13 +17,13 @@
 			<xsd:complexContent>
 				<xsd:extension base="repository:repositories">
 					<xsd:attributeGroup ref="repository:transactional-repository-attributes" />
-					<xsd:attribute name="solr-template-ref" type="solrTemplateRef" default="solrTemplate" />
+					<xsd:attribute name="es-template-ref" type="esTemplateRef" default="esTemplate" />
 				</xsd:extension>
 			</xsd:complexContent>
 		</xsd:complexType>
 	</xsd:element>
 
-	<xsd:simpleType name="solrTemplateRef">
+	<xsd:simpleType name="esTemplateRef">
 		<xsd:annotation>
 			<xsd:appinfo>
 				<tool:annotation kind="ref">
