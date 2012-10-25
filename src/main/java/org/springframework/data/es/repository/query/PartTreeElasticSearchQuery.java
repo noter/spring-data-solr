@@ -15,26 +15,26 @@
  */
 package org.springframework.data.es.repository.query;
 
-import org.springframework.data.es.core.SolrOperations;
-import org.springframework.data.es.core.mapping.SolrPersistentProperty;
+import org.springframework.data.es.core.ElasticSearchOperations;
+import org.springframework.data.es.core.mapping.ElasticSearchPersistentProperty;
 import org.springframework.data.es.core.query.Query;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.repository.query.parser.PartTree;
 
 /**
- * Solr specific implementation of a derived query.
+ * ElasticSearch specific implementation of a derived query.
  * 
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
-public class PartTreeSolrQuery extends AbstractSolrQuery {
+public class PartTreeElasticSearchQuery extends AbstractElasticSearchQuery {
 
+	private final MappingContext<?, ElasticSearchPersistentProperty> mappingContext;
 	private final PartTree tree;
-	private final MappingContext<?, SolrPersistentProperty> mappingContext;
 
-	public PartTreeSolrQuery(SolrQueryMethod method, SolrOperations solrOperations) {
+	public PartTreeElasticSearchQuery(ElasticSearchQueryMethod method, ElasticSearchOperations solrOperations) {
 		super(solrOperations, method);
-		this.tree = new PartTree(method.getName(), method.getEntityInformation().getJavaType());
-		this.mappingContext = solrOperations.getConverter().getMappingContext();
+		tree = new PartTree(method.getName(), method.getEntityInformation().getJavaType());
+		mappingContext = solrOperations.getConverter().getMappingContext();
 	}
 
 	public PartTree getTree() {
@@ -42,8 +42,8 @@ public class PartTreeSolrQuery extends AbstractSolrQuery {
 	}
 
 	@Override
-	protected Query createQuery(SolrParameterAccessor parameterAccessor) {
-		return new SolrQueryCreator(tree, parameterAccessor, mappingContext).createQuery();
+	protected Query createQuery(ElasticSearchParameterAccessor parameterAccessor) {
+		return new ElasticSearchQueryCreator(tree, parameterAccessor, mappingContext).createQuery();
 	}
 
 }

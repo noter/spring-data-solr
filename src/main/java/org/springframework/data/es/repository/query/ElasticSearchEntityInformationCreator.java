@@ -17,17 +17,11 @@ package org.springframework.data.es.repository.query;
 
 import java.io.Serializable;
 
-import org.springframework.data.repository.core.EntityInformation;
-
 /**
- * @param <T>
- * @param <ID>
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
-public interface SolrEntityInformation<T, ID extends Serializable> extends EntityInformation<T, ID> {
+public interface ElasticSearchEntityInformationCreator {
 
-	String getIdAttribute();
-
-	String getSolrCoreName();
+	<T, ID extends Serializable> ElasticSearchEntityInformation<T, ID> getEntityInformation(Class<T> domainClass);
 
 }

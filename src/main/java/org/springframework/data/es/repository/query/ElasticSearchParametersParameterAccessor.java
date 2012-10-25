@@ -15,13 +15,15 @@
  */
 package org.springframework.data.es.repository.query;
 
-import java.io.Serializable;
+import org.springframework.data.repository.query.ParametersParameterAccessor;
 
 /**
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
-public interface SolrEntityInformationCreator {
+public class ElasticSearchParametersParameterAccessor extends ParametersParameterAccessor implements ElasticSearchParameterAccessor {
 
-	<T, ID extends Serializable> SolrEntityInformation<T, ID> getEntityInformation(Class<T> domainClass);
+	public ElasticSearchParametersParameterAccessor(ElasticSearchQueryMethod elasticSearchQueryMethod, Object[] values) {
+		super(elasticSearchQueryMethod.getParameters(), values);
+	}
 
 }

@@ -46,91 +46,110 @@ public interface ElasticSearchOperations {
 	 */
 	String convertBeanToESJsonSource(Object bean);
 
-	<T extends Object> T convertESJsonToBean(String source, Class<T> clazz);
-
 	/**
-	 * Execute add operation against es
+	 * Convert given JSON source to a bean of type clazz
 	 * 
-	 * @param obj
+	 * @param source
+	 * @param clazz
 	 * @return
 	 */
-	IndexResponse executeAddBean(Object obj);
+	<T extends Object> T convertESJsonSourceToBean(String source, Class<T> clazz);
 
 	/**
-	 * Add a collection of beans to es
-	 * 
-	 * @param beans
-	 * @return
-	 */
-	BulkResponse executeAddBeans(Collection<?> beans);
-
-	/**
-	 * return number of elements found by for given query
+	 * return number of elements found by for given query for given type
 	 * 
 	 * @param query
 	 * @return
 	 */
-	long executeCount(ESDataQuery query);
+	long count(ESDataQuery query, Class<?>... types);
 
 	/**
-	 * Find and delete all objects matching the provided Query
+	 * return number of elements found by for given query in given inidcates
 	 * 
 	 * @param query
 	 * @return
 	 */
-	DeleteByQueryResponse executeDelete(ESDataQuery query);
+	long count(ESDataQuery query, String... indices);
 
 	/**
-	 * Delete objects with given ids
+	 * return number of elements found by for given query in given inidcates and
+	 * types
+	 * 
+	 * @param query
+	 * @return
+	 */
+	long count(ESDataQuery query, String[] indices, Class<?>... types);
+
+	/**
+	 * Find and delete all objects matching the provided Query and types
+	 * 
+	 * @param query
+	 * @return
+	 */
+	DeleteByQueryResponse delete(ESDataQuery query, Class<?>... types);
+
+	/**
+	 * Find and delete all objects matching the provided Query in given indices
+	 * 
+	 * @param query
+	 * @return
+	 */
+
+	DeleteByQueryResponse delete(ESDataQuery query, String... indices);
+
+	/**
+	 * Find and delete all objects matching the provided Query and types in
+	 * given indices
+	 * 
+	 * @param query
+	 * @return
+	 */
+	DeleteByQueryResponse delete(ESDataQuery query, String[] indices, Class<?>... types);
+
+	/**
+	 * Delete objects with given ids and type
 	 * 
 	 * @param id
 	 * @return
 	 */
-	List<DeleteResponse> executeDeleteById(Collection<String> id);
+	List<DeleteResponse> deleteById(Collection<String> id, Class<?> type);
 
 	/**
-	 * Detele the one object with provided id
+	 * Detele the one object with provided id and type
 	 * 
 	 * @param id
 	 * @return
 	 */
-	DeleteResponse executeDeleteById(String id);
+	DeleteResponse deleteById(String id, Class<?> type);
 
 	/**
-	 * Execute a facet query against solr facet result will be returned along
-	 * with query result within the FacetPage
+	 * Execute a facet query against ElasticSearch facet result will be returned
+	 * along with query result within the FacetPage
 	 * 
 	 * @param query
 	 * @param clazz
 	 * @return
 	 */
-	<T> FacetPage<T> executeFacetQuery(FacetQuery query, Class<T> clazz);
+	<T> FacetPage<T> findAll(FacetQuery query, Class<T> clazz);
 
 	/**
-	 * Execute the query against solr and retrun result as {@link Page}
+	 * Execute the query against ElasticSarcg and retrun result as {@link Page}
 	 * 
 	 * @param query
 	 * @param clazz
 	 * @return
 	 */
-	<T> Page<T> executeListQuery(Query query, Class<T> clazz);
+	<T> Page<T> findAll(Query query, Class<T> clazz);
 
 	/**
-	 * Execute the query against solr and return the first returned object
+	 * Execute the query against ElasticSearch and return the first returned
+	 * object
 	 * 
 	 * @param query
 	 * @param clazz
 	 * @return the first matching object
 	 */
-	<T> T executeObjectQuery(Query query, Class<T> clazz);
-
-	/**
-	 * Execute query against Solr
-	 * 
-	 * @param query
-	 * @return
-	 */
-	SearchResponse executeQuery(ESDataQuery query);
+	<T> T findOne(Query query, Class<T> clazz);
 
 	/**
 	 * @return Converter in use
@@ -143,5 +162,29 @@ public interface ElasticSearchOperations {
 	 * @return
 	 */
 	Client getElasticSearchClient();
+
+	/**
+	 * Execute query against Solr
+	 * 
+	 * @param query
+	 * @return
+	 */
+	SearchResponse query(ESDataQuery query);
+
+	/**
+	 * Add a collection of beans to es
+	 * 
+	 * @param beans
+	 * @return
+	 */
+	BulkResponse save(Collection<?> beans);
+
+	/**
+	 * Execute add operation against es
+	 * 
+	 * @param obj
+	 * @return
+	 */
+	IndexResponse save(Object obj);
 
 }

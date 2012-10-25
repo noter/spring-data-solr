@@ -31,6 +31,7 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,28 +40,28 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
-import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.es.ESClientFactory;
 import org.springframework.data.es.TransportClientESClientFactory;
 import org.springframework.data.es.UncategorizedESException;
 import org.springframework.data.es.core.convert.ElasticSearchConverter;
 import org.springframework.data.es.core.convert.MappingElasticSearchConverter;
 import org.springframework.data.es.core.mapping.ElasticSearchPersistentEntity;
+import org.springframework.data.es.core.mapping.ElasticSearchPersistentProperty;
 import org.springframework.data.es.core.mapping.SimpleESMappingContext;
 import org.springframework.data.es.core.query.ESDataQuery;
 import org.springframework.data.es.core.query.FacetQuery;
 import org.springframework.data.es.core.query.Query;
 import org.springframework.data.es.core.query.result.FacetPage;
+import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.BeanWrapper;
 import org.springframework.util.Assert;
 
 /**
- * Implementation of SolrOperations
+ * Implementation of ElasticSearchOperations
  * 
- * @author Christoph Strobl
+ * @author Patryk Wąsik
  */
 public class ElasticSearchTemplate implements ElasticSearchOperations, InitializingBean, ApplicationContextAware {
 
@@ -91,8 +92,6 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 
 	private final ElasticSearchConverter elasticSearchConverter;
 
-	private final EntityInstantiators entityInstantiator = new EntityInstantiators();
-
 	private final ESClientFactory esClientFactory;
 
 	private QueryParser queryParser = DEFAULT_QUERY_PARSER;
@@ -114,7 +113,7 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 		Assert.notNull(esClientFactory.getElasticSearchClient(), "ESClientFactory has to return a Client.");
 
 		this.esClientFactory = esClientFactory;
-		elasticSearchConverter = elasticSearchConverter == null ? getDefaultESConverter() : elasticSearchConverter;
+		this.elasticSearchConverter = elasticSearchConverter == null ? getDefaultESConverter() : elasticSearchConverter;
 	}
 
 	@Override
@@ -133,8 +132,74 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 	}
 
 	@Override
-	public <T> T convertESJsonToBean(String source, Class<T> clazz) {
+	public <T> T convertESJsonSourceToBean(String source, Class<T> clazz) {
 		return getConverter().read(clazz, new StringBuilder(source));
+	}
+
+	@Override
+	public long count(final ESDataQuery query, Class<?>... types) {
+		Assert.notNull(query, "Query must not be 'null'.");
+
+		return countInternal(query, indicateNames(types), types);
+	}
+
+	@Override
+	public long count(ESDataQuery query, String... indices) {
+		return countInternal(query, indices, new Class[0]);
+	}
+
+	@Override
+	public long count(ESDataQuery query, String[] indices, Class<?>... types) {
+		return countInternal(query, indices, types);
+	}
+
+	@Override
+	public DeleteByQueryResponse delete(final ESDataQuery query, final Class<?>... type) {
+		Assert.notNull(query, "Query must not be 'null'.");
+		return deleteInternal(query, new String[0], type);
+
+	}
+
+	@Override
+	public DeleteByQueryResponse delete(ESDataQuery query, String... indices) {
+		return deleteInternal(query, indices, new Class[0]);
+	}
+
+	@Override
+	public DeleteByQueryResponse delete(ESDataQuery query, String[] indices, Class<?>... types) {
+		return deleteInternal(query, indices, types);
+	}
+
+	@Override
+	public List<DeleteResponse> deleteById(final Collection<String> ids, final Class<?> type) {
+		Assert.notNull(ids, "Cannot delete 'null' collection.");
+		Assert.notNull(type, "Type can't be null");
+
+		return execute(new ElasticSearchCallback<List<DeleteResponse>>() {
+
+			@Override
+			public List<DeleteResponse> doInES(Client client) throws ElasticSearchException, IOException {
+				List<DeleteResponse> deleteResponses = new ArrayList<DeleteResponse>();
+				for (String id : ids) {
+					deleteResponses.add(deleteById(id, type));
+				}
+				return deleteResponses;
+			}
+		});
+	}
+
+	@Override
+	public DeleteResponse deleteById(final String id, final Class<?> type) {
+		Assert.notNull(id, "Cannot delete 'null' id.");
+		Assert.notNull(type, "Type can't be null");
+
+		return execute(new ElasticSearchCallback<DeleteResponse>() {
+			@Override
+			public DeleteResponse doInES(Client client) throws ElasticSearchException, IOException {
+				return client.prepareDelete().setIndex(indicateName(type)).setType(typeName(type)).setId(id).execute().actionGet();
+			}
+		});
+
 	}
 
 	public <T> T execute(ElasticSearchCallback<T> action) {
@@ -148,20 +213,95 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 	}
 
 	@Override
-	public IndexResponse executeAddBean(final Object objectToAdd) {
-		assertNoCollection(objectToAdd);
-		return execute(new ElasticSearchCallback<IndexResponse>() {
+	public <T> FacetPage<T> findAll(final FacetQuery query, final Class<T> clazz) {
+		Assert.notNull(query, "Query must not be 'null'.");
+		Assert.notNull(clazz, "Target class must not be 'null'.");
+
+		return execute(new ElasticSearchCallback<FacetPage<T>>() {
 
 			@Override
-			public IndexResponse doInES(Client client) throws ElasticSearchException, IOException {
-				return prepareIndex(client, objectToAdd).setSource(convertBeanToESJsonSource(objectToAdd)).execute().actionGet();
-			}
+			public FacetPage<T> doInES(Client client) throws ElasticSearchException, IOException {
 
+				SearchResponse searchResponse = execute(client, query, clazz);
+
+				FacetPage<T> facetPage = new FacetPage<T>(convertSearchResponse(searchResponse, clazz), query.getPageRequest(), searchResponse
+						.getHits().getTotalHits());
+				facetPage.addAllFacetResultPages(ResultHelper.convertFacetQueryResponseToFacetPageMap(query, searchResponse.facets()));
+				return facetPage;
+			}
 		});
 	}
 
 	@Override
-	public BulkResponse executeAddBeans(final Collection<?> beansToAdd) {
+	public <T> Page<T> findAll(final Query query, final Class<T> clazz) {
+		Assert.notNull(query, "Query must not be 'null'.");
+		Assert.notNull(clazz, "Target class must not be 'null'.");
+
+		return execute(new ElasticSearchCallback<Page<T>>() {
+
+			@Override
+			public Page<T> doInES(Client client) throws ElasticSearchException, IOException {
+
+				SearchRequestBuilder builder = queryParser.constructESSearchQuery(query, client);
+				ElasticSearchPersistentEntity<?> persistentEntity = getConverter().getMappingContext().getPersistentEntity(clazz);
+
+				builder.setIndices(persistentEntity.getIndexName()).setTypes(persistentEntity.getTypeName());
+
+				SearchResponse actionGet = builder.execute().actionGet();
+				PageImpl<T> page = new PageImpl<T>(convertSearchResponse(actionGet, clazz), query.getPageRequest(), actionGet.getHits()
+						.getTotalHits());
+				return page;
+			}
+		});
+	}
+
+	@Override
+	public <T> T findOne(final Query query, final Class<T> clazz) {
+		Assert.notNull(query, "Query must not be 'null'.");
+		Assert.notNull(clazz, "Target class must not be 'null'.");
+
+		return execute(new ElasticSearchCallback<T>() {
+
+			@Override
+			public T doInES(Client client) throws ElasticSearchException, IOException {
+				SearchResponse response = client.prepareSearch(indicateName(clazz)).setTypes(typeName(clazz)).setQuery(queryParser.getESQuery(query))
+						.setFrom(0).setSize(1).execute().actionGet();
+				if (response.getHits().getTotalHits() > 0) {
+					if (response.getHits().getTotalHits() > 1) {
+						LOGGER.warn("More than 1 result found for singe result query ('{}'), returning first entry in list");
+					}
+					return convertESJsonSourceToBean(response.getHits().getAt(0).getSourceAsString(), clazz);
+				}
+				return null;
+			}
+		});
+	}
+
+	@Override
+	public ElasticSearchConverter getConverter() {
+		return elasticSearchConverter;
+	}
+
+	@Override
+	public Client getElasticSearchClient() {
+		return esClientFactory.getElasticSearchClient();
+	}
+
+	@Override
+	public final SearchResponse query(final ESDataQuery query) {
+		Assert.notNull(query, "Query must not be 'null'");
+
+		return execute(new ElasticSearchCallback<SearchResponse>() {
+
+			@Override
+			public SearchResponse doInES(Client client) throws ElasticSearchException, IOException {
+				return queryParser.constructESSearchQuery(query, client).execute().actionGet();
+			}
+		});
+	}
+
+	@Override
+	public BulkResponse save(final Collection<?> beansToAdd) {
 		return execute(new ElasticSearchCallback<BulkResponse>() {
 			@Override
 			public BulkResponse doInES(Client client) throws ElasticSearchException, IOException {
@@ -176,137 +316,16 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 	}
 
 	@Override
-	public long executeCount(final ESDataQuery query) {
-		Assert.notNull(query, "Query must not be 'null'.");
-
-		return execute(new ElasticSearchCallback<Long>() {
+	public IndexResponse save(final Object objectToAdd) {
+		assertNoCollection(objectToAdd);
+		return execute(new ElasticSearchCallback<IndexResponse>() {
 
 			@Override
-			public Long doInES(Client client) throws ElasticSearchException, IOException {
-				return queryParser.constructESSearchQuery(query, client).setFrom(0).setSize(0).execute().actionGet().getHits().getTotalHits();
+			public IndexResponse doInES(Client client) throws ElasticSearchException, IOException {
+				return prepareIndex(client, objectToAdd).setSource(convertBeanToESJsonSource(objectToAdd)).execute().actionGet();
 			}
 
 		});
-	}
-
-	@Override
-	public DeleteByQueryResponse executeDelete(final ESDataQuery query) {
-		Assert.notNull(query, "Query must not be 'null'.");
-
-		return execute(new ElasticSearchCallback<DeleteByQueryResponse>() {
-
-			@Override
-			public DeleteByQueryResponse doInES(Client client) throws ElasticSearchException, IOException {
-				return client.prepareDeleteByQuery().setQuery(queryParser.getESQuery(query)).execute().actionGet();
-			}
-		});
-	}
-
-	@Override
-	public List<DeleteResponse> executeDeleteById(final Collection<String> ids) {
-		Assert.notNull(ids, "Cannot delete 'null' collection.");
-
-		return execute(new ElasticSearchCallback<List<DeleteResponse>>() {
-
-			@Override
-			public List<DeleteResponse> doInES(Client client) throws ElasticSearchException, IOException {
-				List<DeleteResponse> deleteResponses = new ArrayList<DeleteResponse>();
-				for (String id : ids) {
-					deleteResponses.add(executeDeleteById(id));
-				}
-				return deleteResponses;
-			}
-		});
-	}
-
-	@Override
-	public DeleteResponse executeDeleteById(final String id) {
-		Assert.notNull(id, "Cannot delete 'null' id.");
-
-		return execute(new ElasticSearchCallback<DeleteResponse>() {
-
-			@Override
-			public DeleteResponse doInES(Client client) throws ElasticSearchException, IOException {
-				return client.prepareDelete().setId(id).execute().actionGet();
-			}
-		});
-
-	}
-
-	@Override
-	public <T> FacetPage<T> executeFacetQuery(final FacetQuery query, final Class<T> clazz) {
-		Assert.notNull(query, "Query must not be 'null'.");
-		Assert.notNull(clazz, "Target class must not be 'null'.");
-
-		return execute(new ElasticSearchCallback<FacetPage<T>>() {
-
-			@Override
-			public FacetPage<T> doInES(Client client) throws ElasticSearchException, IOException {
-				SearchRequestBuilder builder = queryParser.constructESSearchQuery(query, client);
-				ElasticSearchPersistentEntity<?> persistentEntity = getConverter().getMappingContext().getPersistentEntity(clazz);
-
-				builder.setIndices(persistentEntity.getIndexName()).setTypes(persistentEntity.getTypeName());
-
-				SearchResponse actionGet = builder.execute().actionGet();
-				FacetPage<T> facetPage = new FacetPage<T>(convertSearchResponse(actionGet, clazz), query.getPageRequest(), actionGet.getHits()
-						.getTotalHits());
-
-				return facetPage;
-			}
-		});
-
-		QueryResponse response = executeQuery(query);
-
-		FacetPage<T> page = new FacetPage<T>(response.getBeans(clazz), query.getPageRequest(), response.getResults().getNumFound());
-		page.addAllFacetResultPages(ResultHelper.convertFacetQueryResponseToFacetPageMap(query, response));
-
-		return page;
-	}
-
-	@Override
-	public <T> Page<T> executeListQuery(Query query, Class<T> clazz) {
-		Assert.notNull(query, "Query must not be 'null'.");
-		Assert.notNull(clazz, "Target class must not be 'null'.");
-
-		QueryResponse response = executeQuery(query);
-		return new PageImpl<T>(response.getBeans(clazz), query.getPageRequest(), response.getResults().getNumFound());
-	}
-
-	@Override
-	public <T> T executeObjectQuery(Query query, Class<T> clazz) {
-		Assert.notNull(query, "Query must not be 'null'.");
-		Assert.notNull(clazz, "Target class must not be 'null'.");
-
-		query.setPageRequest(new PageRequest(0, 1));
-		QueryResponse response = executeQuery(query);
-
-		if (response.getResults().size() > 0) {
-			if (response.getResults().size() > 1) {
-				LOGGER.warn("More than 1 result found for singe result query ('{}'), returning first entry in list");
-			}
-			return response.getBeans(clazz).get(0);
-		}
-		return null;
-	}
-
-	@Override
-	public final QueryResponse executeQuery(SolrDataQuery query) {
-		Assert.notNull(query, "Query must not be 'null'");
-
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		LOGGER.debug("Executing query '" + solrQuery + "' against solr.");
-
-		return executeSolrQuery(solrQuery);
-	}
-
-	@Override
-	public ElasticSearchConverter getConverter() {
-		return elasticSearchConverter;
-	}
-
-	@Override
-	public Client getElasticSearchClient() {
-		return esClientFactory.getElasticSearchClient();
 	}
 
 	@Override
@@ -322,11 +341,14 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 		}
 	}
 
-	final QueryResponse executeSolrQuery(final SolrQuery solrQuery) {
-		return execute(new SolrCallback<QueryResponse>() {
+	DeleteByQueryResponse deleteInternal(final ESDataQuery query, String[] indices, final Class<?>[] types) {
+		return execute(new ElasticSearchCallback<DeleteByQueryResponse>() {
+
 			@Override
-			public QueryResponse doInSolr(SolrServer solrServer) throws SolrServerException, IOException {
-				return solrServer.query(solrQuery);
+			public DeleteByQueryResponse doInES(Client client) throws ElasticSearchException, IOException {
+
+				return client.prepareDeleteByQuery().setIndices(indicateNames(types)).setTypes(typeNames(types))
+						.setQuery(queryParser.getESQuery(query)).execute().actionGet();
 			}
 		});
 	}
@@ -334,9 +356,51 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 	private <T> List<T> convertSearchResponse(SearchResponse searchResponse, Class<T> clazz) {
 		List<T> list = new ArrayList<T>();
 		for (SearchHit searchHit : searchResponse.getHits()) {
-			list.add(convertESJsonToBean(searchHit.getSourceAsString(), clazz));
+			list.add(convertESJsonSourceToBean(searchHit.getSourceAsString(), clazz));
 		}
 		return list;
+	}
+
+	private long countInternal(final ESDataQuery query, final String[] indices, final Class<?>[] types) {
+		return execute(new ElasticSearchCallback<Long>() {
+
+			@Override
+			public Long doInES(Client client) throws ElasticSearchException, IOException {
+
+				QueryBuilder queryBuilder = queryParser.getESQuery(query);
+				return client.prepareCount(indices).setTypes(typeNames(types)).setQuery(queryBuilder).execute().actionGet().count();
+			}
+		});
+	}
+
+	private SearchResponse execute(Client client, Query query, Class<?> clazz) {
+		SearchRequestBuilder builder = queryParser.constructESSearchQuery(query, client);
+		ElasticSearchPersistentEntity<?> persistentEntity = getConverter().getMappingContext().getPersistentEntity(clazz);
+
+		builder.setIndices(persistentEntity.getIndexName()).setTypes(persistentEntity.getTypeName());
+
+		return builder.execute().actionGet();
+	}
+
+	private MappingContext<? extends ElasticSearchPersistentEntity<?>, ElasticSearchPersistentProperty> getMappingContext() {
+		Assert.notNull(getConverter());
+		return getConverter().getMappingContext();
+	}
+
+	private String indicateName(Class<?> clazz) {
+		ElasticSearchPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(clazz);
+
+		Assert.notNull(persistentEntity);
+
+		return persistentEntity.getIndexName();
+	}
+
+	private String[] indicateNames(Class<?>[] classes) {
+		List<String> indicateNames = new ArrayList<String>();
+		for (Class<?> clazz : classes) {
+			indicateNames.add(indicateName(clazz));
+		}
+		return indicateNames.toArray(new String[0]);
 	}
 
 	private IndexRequestBuilder prepareIndex(Client client, Object object) {
@@ -344,5 +408,21 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 		BeanWrapper<ElasticSearchPersistentEntity<Object>, Object> beanWrapper = BeanWrapper.create(object, getConverter().getConversionService());
 		return client.prepareIndex(elasticSearchPersistentEntity.getIndexName(), elasticSearchPersistentEntity.getTypeName(), getConverter()
 				.getConversionService().convert(beanWrapper.getProperty(elasticSearchPersistentEntity.getIdProperty()), String.class));
+	}
+
+	private String typeName(Class<?> clazz) {
+		ElasticSearchPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(clazz);
+
+		Assert.notNull(persistentEntity);
+
+		return persistentEntity.getTypeName();
+	}
+
+	private String[] typeNames(Class<?>[] classes) {
+		List<String> typeNames = new ArrayList<String>();
+		for (Class<?> clazz : classes) {
+			typeNames.add(typeName(clazz));
+		}
+		return typeNames.toArray(new String[0]);
 	}
 }

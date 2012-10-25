@@ -17,7 +17,7 @@ package org.springframework.data.es.repository.config;
 
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.core.annotation.AnnotationAttributes;
-import org.springframework.data.es.repository.support.SolrRepositoryFactoryBean;
+import org.springframework.data.es.repository.support.ElasticSearchRepositoryFactoryBean;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
 import org.springframework.data.repository.config.RepositoryConfigurationExtension;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
@@ -25,50 +25,69 @@ import org.springframework.data.repository.config.XmlRepositoryConfigurationSour
 import org.w3c.dom.Element;
 
 /**
- * {@link RepositoryConfigurationExtension} implementation to configure Solr repository configuration support,
- * evaluating the {@link EnableSolrRepositories} annotation or the equivalent XML element.
+ * {@link RepositoryConfigurationExtension} implementation to configure
+ * ElasticSearch repository configuration support, evaluating the
+ * {@link EnableElasticSearchRepositories} annotation or the equivalent XML
+ * element.
  * 
  * @author Oliver Gierke
  */
-class SolrRepositoryConfigExtension extends RepositoryConfigurationExtensionSupport {
+class ElasticSearchRepositoryConfigExtension extends RepositoryConfigurationExtensionSupport {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.config.RepositoryConfigurationExtension#getRepositoryFactoryClassName()
+	 * 
+	 * @see
+	 * org.springframework.data.repository.config.RepositoryConfigurationExtension
+	 * #getRepositoryFactoryClassName()
 	 */
 	@Override
 	public String getRepositoryFactoryClassName() {
-		return SolrRepositoryFactoryBean.class.getName();
+		return ElasticSearchRepositoryFactoryBean.class.getName();
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport#getModulePrefix()
-	 */
-	@Override
-	protected String getModulePrefix() {
-		return "solr";
-	}
-
-	/* 
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport#postProcess(org.springframework.beans.factory.support.BeanDefinitionBuilder, org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource)
+	 * 
+	 * @see org.springframework.data.repository.config.
+	 * RepositoryConfigurationExtensionSupport
+	 * #postProcess(org.springframework.beans
+	 * .factory.support.BeanDefinitionBuilder,
+	 * org.springframework.data.repository
+	 * .config.AnnotationRepositoryConfigurationSource)
 	 */
 	@Override
 	public void postProcess(BeanDefinitionBuilder builder, AnnotationRepositoryConfigurationSource config) {
 
 		AnnotationAttributes attributes = config.getAttributes();
-		builder.addPropertyReference("solrOperations", attributes.getString("solrTemplateRef"));
+		builder.addPropertyReference("elasticSearchOperations", attributes.getString("elasticSearchTemplateRef"));
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport#postProcess(org.springframework.beans.factory.support.BeanDefinitionBuilder, org.springframework.data.repository.config.XmlRepositoryConfigurationSource)
+	 * 
+	 * @see org.springframework.data.repository.config.
+	 * RepositoryConfigurationExtensionSupport
+	 * #postProcess(org.springframework.beans
+	 * .factory.support.BeanDefinitionBuilder,
+	 * org.springframework.data.repository
+	 * .config.XmlRepositoryConfigurationSource)
 	 */
 	@Override
 	public void postProcess(BeanDefinitionBuilder builder, XmlRepositoryConfigurationSource config) {
 
 		Element element = config.getElement();
-		builder.addPropertyReference("solrOperations", element.getAttribute("solr-template-ref"));
+		builder.addPropertyReference("elasticSearchOperations", element.getAttribute("elasticsearch-template-ref"));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.springframework.data.repository.config.
+	 * RepositoryConfigurationExtensionSupport#getModulePrefix()
+	 */
+	@Override
+	protected String getModulePrefix() {
+		return "es";
 	}
 }

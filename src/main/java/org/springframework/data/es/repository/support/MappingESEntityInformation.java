@@ -17,44 +17,49 @@ package org.springframework.data.es.repository.support;
 
 import java.io.Serializable;
 
-import org.springframework.data.es.core.mapping.SolrPersistentEntity;
-import org.springframework.data.es.core.mapping.SolrPersistentProperty;
-import org.springframework.data.es.repository.query.SolrEntityInformation;
+import org.springframework.data.es.core.mapping.ElasticSearchPersistentEntity;
+import org.springframework.data.es.core.mapping.ElasticSearchPersistentProperty;
+import org.springframework.data.es.repository.query.ElasticSearchEntityInformation;
 import org.springframework.data.mapping.model.BeanWrapper;
 import org.springframework.data.repository.core.support.AbstractEntityInformation;
 
 /**
- * Solr specific implementation of {@link AbstractEntityInformation}
+ * ElasticSearch specific implementation of {@link AbstractEntityInformation}
  * 
  * @param <T>
  * @param <ID>
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
-public class MappingSolrEntityInformation<T, ID extends Serializable> extends AbstractEntityInformation<T, ID>
-		implements SolrEntityInformation<T, ID> {
+public class MappingESEntityInformation<T, ID extends Serializable> extends AbstractEntityInformation<T, ID> implements
+		ElasticSearchEntityInformation<T, ID> {
 
-	private final SolrPersistentEntity<T> entityMetadata;
-	private final String solrCoreName;
+	private final ElasticSearchPersistentEntity<T> entityMetadata;
+	private final String indexTypeName;
 
-	public MappingSolrEntityInformation(SolrPersistentEntity<T> entity) {
+	public MappingESEntityInformation(ElasticSearchPersistentEntity<T> entity) {
 		this(entity, null);
 	}
 
-	public MappingSolrEntityInformation(SolrPersistentEntity<T> entity, String solrCoreName) {
+	public MappingESEntityInformation(ElasticSearchPersistentEntity<T> entity, String indexTypeName) {
 		super(entity.getType());
 		this.entityMetadata = entity;
-		this.solrCoreName = solrCoreName;
+		this.indexTypeName = indexTypeName;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public ID getId(T entity) {
-		SolrPersistentProperty id = entityMetadata.getIdProperty();
+		ElasticSearchPersistentProperty id = entityMetadata.getIdProperty();
 		try {
 			return (ID) BeanWrapper.create(entity, null).getProperty(id);
 		} catch (Exception e) {
 			throw new IllegalStateException("ID could not be resolved", e);
 		}
+	}
+
+	@Override
+	public String getIdAttribute() {
+		return entityMetadata.getIdProperty().getIndexName();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -64,12 +69,8 @@ public class MappingSolrEntityInformation<T, ID extends Serializable> extends Ab
 	}
 
 	@Override
-	public String getIdAttribute() {
-		return entityMetadata.getIdProperty().getFieldName();
-	}
-
-	public String getSolrCoreName() {
-		return solrCoreName != null ? solrCoreName : entityMetadata.getSolrCoreName();
+	public String getIndexTypeName() {
+		return indexTypeName != null ? indexTypeName : entityMetadata.getTypeName();
 	}
 
 }

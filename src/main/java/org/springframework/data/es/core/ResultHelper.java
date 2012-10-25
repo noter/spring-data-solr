@@ -15,17 +15,21 @@
  */
 package org.springframework.data.es.core;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import org.elasticsearch.search.facet.Facet;
 import org.elasticsearch.search.facet.Facets;
 import org.elasticsearch.search.facet.terms.TermsFacet;
+import org.elasticsearch.search.facet.terms.TermsFacet.Entry;
 import org.springframework.data.domain.Page;
 import org.springframework.data.es.core.query.FacetQuery;
 import org.springframework.data.es.core.query.Field;
 import org.springframework.data.es.core.query.result.FacetEntry;
+import org.springframework.data.es.core.query.result.FacetPage;
+import org.springframework.data.es.core.query.result.SimpleFacetEntry;
 import org.springframework.util.Assert;
 
 /**
@@ -44,10 +48,17 @@ final class ResultHelper {
 			return Collections.emptyMap();
 		}
 		Map<Field, Page<FacetEntry>> facetResult = new HashMap<Field, Page<FacetEntry>>();
-
-		for (Facet facet : facets.facets()) {
-			TermsFacet termsFacet = facets.facet(TermsFacet.class, facet.name());
-
+		for (Field field : query.getFacetOptions().getFacetOnFields()) {
+			TermsFacet termsFacet = facets.facet(TermsFacet.class, field.getName());
+			if (termsFacet != null) {
+				List<FacetEntry> facetEntries = new ArrayList<FacetEntry>();
+				for (Entry entry : termsFacet) {
+					facetEntries.add(new SimpleFacetEntry(field, entry.term(), entry.count()));
+				}
+				facetResult.put(field, new FacetPage<FacetEntry>(facetEntries));
+			} else {
+				facetResult.put(field, new FacetPage<FacetEntry>(new ArrayList<FacetEntry>()));
+			}
 		}
 		return facetResult;
 	}

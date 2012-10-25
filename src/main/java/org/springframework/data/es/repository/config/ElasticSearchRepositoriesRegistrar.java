@@ -22,28 +22,32 @@ import org.springframework.data.repository.config.RepositoryBeanDefinitionRegist
 import org.springframework.data.repository.config.RepositoryConfigurationExtension;
 
 /**
- * {@link ImportBeanDefinitionRegistrar} implementation to trigger configuration of the {@link EnableSolrRepositories}
- * annotation.
+ * {@link ImportBeanDefinitionRegistrar} implementation to trigger configuration
+ * of the {@link EnableElasticSearchRepositories} annotation.
  * 
  * @author Oliver Gierke
  */
-class SolrRepositoriesRegistrar extends RepositoryBeanDefinitionRegistrarSupport {
+class ElasticSearchRepositoriesRegistrar extends RepositoryBeanDefinitionRegistrarSupport {
 
-	/* 
+	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.config.RepositoryBeanDefinitionRegistrarSupport#getAnnotation()
+	 * 
+	 * @see org.springframework.data.repository.config.
+	 * RepositoryBeanDefinitionRegistrarSupport#getAnnotation()
 	 */
 	@Override
 	protected Class<? extends Annotation> getAnnotation() {
-		return EnableSolrRepositories.class;
+		return EnableElasticSearchRepositories.class;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.config.RepositoryBeanDefinitionRegistrarSupport#getExtension()
+	 * 
+	 * @see org.springframework.data.repository.config.
+	 * RepositoryBeanDefinitionRegistrarSupport#getExtension()
 	 */
 	@Override
 	protected RepositoryConfigurationExtension getExtension() {
-		return new SolrRepositoryConfigExtension();
+		return new ElasticSearchRepositoryConfigExtension();
 	}
 }

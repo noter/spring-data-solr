@@ -19,10 +19,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.springframework.core.convert.support.GenericConversionService;
-import org.springframework.data.es.core.SolrOperations;
-import org.springframework.data.es.core.convert.DateTimeConverters;
+import org.springframework.data.es.core.ElasticSearchOperations;
 import org.springframework.data.es.core.convert.GeoConverters;
-import org.springframework.data.es.core.convert.NumberConverters;
 import org.springframework.data.es.core.geo.Distance;
 import org.springframework.data.es.core.geo.GeoLocation;
 import org.springframework.data.es.core.query.Query;
@@ -31,30 +29,19 @@ import org.springframework.data.es.core.query.SimpleStringCriteria;
 import org.springframework.data.repository.query.RepositoryQuery;
 
 /**
- * Solr specific implementation of {@link RepositoryQuery} that can handle string based queries
+ * ElasticSearch specific implementation of {@link RepositoryQuery} that can
+ * handle string based queries
  * 
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
-public class StringBasedSolrQuery extends AbstractSolrQuery {
+public class StringBasedElasticSearchQuery extends AbstractElasticSearchQuery {
 
 	private static final Pattern PARAMETER_PLACEHOLDER = Pattern.compile("\\?(\\d+)");
 
-	private final String rawQueryString;
 	private final GenericConversionService conversionService = new GenericConversionService();
+	private final String rawQueryString;
 
 	{
-		if (!conversionService.canConvert(java.util.Date.class, String.class)) {
-			conversionService.addConverter(DateTimeConverters.JavaDateConverter.INSTANCE);
-		}
-		if (!conversionService.canConvert(org.joda.time.ReadableInstant.class, String.class)) {
-			conversionService.addConverter(DateTimeConverters.JodaDateTimeConverter.INSTANCE);
-		}
-		if (!conversionService.canConvert(org.joda.time.LocalDateTime.class, String.class)) {
-			conversionService.addConverter(DateTimeConverters.JodaLocalDateTimeConverter.INSTANCE);
-		}
-		if (!conversionService.canConvert(Number.class, String.class)) {
-			conversionService.addConverter(NumberConverters.NumberConverter.INSTANCE);
-		}
 		if (!conversionService.canConvert(GeoLocation.class, String.class)) {
 			conversionService.addConverter(GeoConverters.GeoLocationToStringConverter.INSTANCE);
 		}
@@ -63,36 +50,23 @@ public class StringBasedSolrQuery extends AbstractSolrQuery {
 		}
 	}
 
-	public StringBasedSolrQuery(SolrQueryMethod method, SolrOperations solrOperations) {
+	public StringBasedElasticSearchQuery(ElasticSearchQueryMethod method, ElasticSearchOperations solrOperations) {
 		this(method.getAnnotatedQuery(), method, solrOperations);
 	}
 
-	public StringBasedSolrQuery(String query, SolrQueryMethod queryMethod, SolrOperations solrOperations) {
+	public StringBasedElasticSearchQuery(String query, ElasticSearchQueryMethod queryMethod, ElasticSearchOperations solrOperations) {
 		super(solrOperations, queryMethod);
-		this.rawQueryString = query;
+		rawQueryString = query;
 	}
 
 	@Override
-	protected Query createQuery(SolrParameterAccessor parameterAccessor) {
-		String queryString = replacePlaceholders(this.rawQueryString, parameterAccessor);
+	protected Query createQuery(ElasticSearchParameterAccessor parameterAccessor) {
+		String queryString = replacePlaceholders(rawQueryString, parameterAccessor);
 
 		return new SimpleQuery(new SimpleStringCriteria(queryString));
 	}
 
-	private String replacePlaceholders(String input, SolrParameterAccessor accessor) {
-
-		Matcher matcher = PARAMETER_PLACEHOLDER.matcher(input);
-		String result = input;
-
-		while (matcher.find()) {
-			String group = matcher.group();
-			int index = Integer.parseInt(matcher.group(1));
-			result = result.replace(group, getParameterWithIndex(accessor, index));
-		}
-		return result;
-	}
-
-	private String getParameterWithIndex(SolrParameterAccessor accessor, int index) {
+	private String getParameterWithIndex(ElasticSearchParameterAccessor accessor, int index) {
 
 		Object parameter = accessor.getBindableValue(index);
 
@@ -105,5 +79,18 @@ public class StringBasedSolrQuery extends AbstractSolrQuery {
 		}
 
 		return parameter.toString();
+	}
+
+	private String replacePlaceholders(String input, ElasticSearchParameterAccessor accessor) {
+
+		Matcher matcher = PARAMETER_PLACEHOLDER.matcher(input);
+		String result = input;
+
+		while (matcher.find()) {
+			String group = matcher.group();
+			int index = Integer.parseInt(matcher.group(1));
+			result = result.replace(group, getParameterWithIndex(accessor, index));
+		}
+		return result;
 	}
 }

@@ -18,49 +18,59 @@ package org.springframework.data.es.repository.support;
 import java.io.Serializable;
 
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.data.es.core.SolrOperations;
+import org.springframework.data.es.core.ElasticSearchOperations;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.util.Assert;
 
 /**
- * Spring {@link FactoryBean} implementation to ease container based configuration for XML namespace and JavaConfig.
+ * Spring {@link FactoryBean} implementation to ease container based
+ * configuration for XML namespace and JavaConfig.
  * 
  * @author Oliver Gierke
+ * @author Patryk Wasik
  */
-public class SolrRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable> extends
+public class ElasticSearchRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable> extends
 		RepositoryFactoryBeanSupport<T, S, ID> {
 
-	private SolrOperations operations;
+	private ElasticSearchOperations operations;
 
-	/**
-	 * Configures the {@link SolrOperations} to be used to create Solr repositories.
+	/*
+	 * (non-Javadoc)
 	 * 
-	 * @param operations the operations to set
-	 */
-	public void setSolrOperations(SolrOperations operations) {
-		Assert.notNull(operations);
-		this.operations = operations;
-	}
-
-	/* 
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport#createRepositoryFactory()
-	 */
-	@Override
-	protected RepositoryFactorySupport createRepositoryFactory() {
-		return new SolrRepositoryFactory(operations);
-	}
-
-	/* 
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport#afterPropertiesSet()
+	 * @see
+	 * org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport
+	 * #afterPropertiesSet()
 	 */
 	@Override
 	public void afterPropertiesSet() {
 
 		super.afterPropertiesSet();
-		Assert.notNull(operations, "SolrOperations must be configured!");
+		Assert.notNull(operations, "ElasticSearchOperations must be configured!");
+	}
+
+	/**
+	 * Configures the {@link ElasticSearchOperations} to be used to create
+	 * ElasticSearch repositories.
+	 * 
+	 * @param operations
+	 *            the operations to set
+	 */
+	public void setElasticSearchOperations(ElasticSearchOperations operations) {
+		Assert.notNull(operations);
+		this.operations = operations;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport
+	 * #createRepositoryFactory()
+	 */
+	@Override
+	protected RepositoryFactorySupport createRepositoryFactory() {
+		return new ElasticSearchRepositoryFactory(operations);
 	}
 }

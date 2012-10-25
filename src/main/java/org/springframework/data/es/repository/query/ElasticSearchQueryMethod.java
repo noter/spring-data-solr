@@ -26,49 +26,25 @@ import org.springframework.data.util.TypeInformation;
 import org.springframework.util.StringUtils;
 
 /**
- * Solr specific implementation of {@link QueryMethod} taking care of {@link Query}
+ * ElasticSearch specific implementation of {@link QueryMethod} taking care of
+ * {@link Query}
  * 
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
-public class SolrQueryMethod extends QueryMethod {
+public class ElasticSearchQueryMethod extends QueryMethod {
 
-	private final SolrEntityInformation<?, ?> entityInformation;
-	private Method method;
+	private final ElasticSearchEntityInformation<?, ?> entityInformation;
+	private final Method method;
 
-	public SolrQueryMethod(Method method, RepositoryMetadata metadata, SolrEntityInformationCreator solrInformationCreator) {
+	public ElasticSearchQueryMethod(Method method, RepositoryMetadata metadata,
+			ElasticSearchEntityInformationCreator elasticSearchEntityInformationCreator) {
 		super(method, metadata);
 		this.method = method;
-		this.entityInformation = solrInformationCreator.getEntityInformation(metadata.getReturnedDomainClass(method));
-	}
-
-	public boolean hasAnnotatedQuery() {
-		return getAnnotatedQuery() != null;
-	}
-
-	String getAnnotatedQuery() {
-		String query = (String) AnnotationUtils.getValue(getQueryAnnotation(), "value");
-		return StringUtils.hasText(query) ? query : null;
-	}
-
-	public boolean hasAnnotatedNamedQueryName() {
-		return getAnnotatedNamedQueryName() != null;
-	}
-
-	String getAnnotatedNamedQueryName() {
-		String namedQueryName = (String) AnnotationUtils.getValue(getQueryAnnotation(), "name");
-		return StringUtils.hasText(namedQueryName) ? namedQueryName : null;
-	}
-
-	private Query getQueryAnnotation() {
-		return this.method.getAnnotation(Query.class);
-	}
-
-	TypeInformation<?> getReturnType() {
-		return ClassTypeInformation.fromReturnTypeOf(method);
+		entityInformation = elasticSearchEntityInformationCreator.getEntityInformation(metadata.getReturnedDomainClass(method));
 	}
 
 	@Override
-	public SolrEntityInformation<?, ?> getEntityInformation() {
+	public ElasticSearchEntityInformation<?, ?> getEntityInformation() {
 		return entityInformation;
 	}
 
@@ -78,6 +54,32 @@ public class SolrQueryMethod extends QueryMethod {
 			return super.getNamedQueryName();
 		}
 		return getAnnotatedNamedQueryName();
+	}
+
+	public boolean hasAnnotatedNamedQueryName() {
+		return getAnnotatedNamedQueryName() != null;
+	}
+
+	public boolean hasAnnotatedQuery() {
+		return getAnnotatedQuery() != null;
+	}
+
+	String getAnnotatedNamedQueryName() {
+		String namedQueryName = (String) AnnotationUtils.getValue(getQueryAnnotation(), "name");
+		return StringUtils.hasText(namedQueryName) ? namedQueryName : null;
+	}
+
+	String getAnnotatedQuery() {
+		String query = (String) AnnotationUtils.getValue(getQueryAnnotation(), "value");
+		return StringUtils.hasText(query) ? query : null;
+	}
+
+	TypeInformation<?> getReturnType() {
+		return ClassTypeInformation.fromReturnTypeOf(method);
+	}
+
+	private Query getQueryAnnotation() {
+		return method.getAnnotation(Query.class);
 	}
 
 }

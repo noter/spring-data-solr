@@ -17,32 +17,36 @@ package org.springframework.data.es.repository.config;
 
 import org.springframework.beans.factory.xml.NamespaceHandler;
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
-import org.springframework.data.es.config.HttpSolrServerBeanDefinitionParser;
+import org.springframework.data.es.config.TransportClientESClientBeanDefinitionParser;
 import org.springframework.data.es.embedded.config.EmbeddedSolrServerBeanDefinitionParser;
 import org.springframework.data.repository.config.RepositoryBeanDefinitionParser;
 import org.springframework.data.repository.config.RepositoryConfigurationExtension;
 
 /**
- * {@link NamespaceHandler} implementation to register parser for {@code <solr:repositories />},
- * {@code <solr:embedded-solr-server solrHome="path/to/solr/home/directory" />} elements.
+ * {@link NamespaceHandler} implementation to register parser for
+ * {@code <es:repositories />},
+ * {@code <es:embedded-es-server esHome="path/to/es/home/directory" />}
+ * elements.
  * 
  * @author Oliver Gierke
  * @author Christoph Strobl
+ * @author Patryk Wąsik
  */
-class SolrRepositoryNamespaceHandler extends NamespaceHandlerSupport {
+class ElasticSearchRepositoryNamespaceHandler extends NamespaceHandlerSupport {
 
-	/* 
+	/*
 	 * (non-Javadoc)
+	 * 
 	 * @see org.springframework.beans.factory.xml.NamespaceHandler#init()
 	 */
 	@Override
 	public void init() {
 
-		RepositoryConfigurationExtension extension = new SolrRepositoryConfigExtension();
+		RepositoryConfigurationExtension extension = new ElasticSearchRepositoryConfigExtension();
 		RepositoryBeanDefinitionParser parser = new RepositoryBeanDefinitionParser(extension);
 
 		registerBeanDefinitionParser("repositories", parser);
-		registerBeanDefinitionParser("embedded-solr-server", new EmbeddedSolrServerBeanDefinitionParser());
-		registerBeanDefinitionParser("solr-server", new HttpSolrServerBeanDefinitionParser());
+		registerBeanDefinitionParser("embedded-es-server", new EmbeddedSolrServerBeanDefinitionParser());
+		registerBeanDefinitionParser("es-server", new TransportClientESClientBeanDefinitionParser());
 	}
 }

@@ -18,8 +18,8 @@ package org.springframework.data.es.repository.query;
 import org.springframework.data.repository.query.ParameterAccessor;
 
 /**
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
-public interface SolrParameterAccessor extends ParameterAccessor {
+public interface ElasticSearchParameterAccessor extends ParameterAccessor {
 
 }

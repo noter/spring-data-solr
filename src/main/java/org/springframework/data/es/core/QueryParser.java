@@ -71,12 +71,10 @@ public class QueryParser {
 	}
 
 	/**
-	 * Get the queryString to use withSolrQuery.setParam(CommonParams.Q,
-	 * "queryString"}
+	 * Get ElstaicSearch {@link QueryBuilder} from given ESDataQuery
 	 * 
 	 * @param query
-	 * @return String representation of query without faceting, pagination,
-	 *         projection...
+	 * @return
 	 */
 	public QueryBuilder getESQuery(ESDataQuery query) {
 		if (query.getCriteria() == null) {

@@ -15,15 +15,19 @@
  */
 package org.springframework.data.es.repository.query;
 
-import org.springframework.data.repository.query.ParametersParameterAccessor;
+import java.io.Serializable;
+
+import org.springframework.data.repository.core.EntityInformation;
 
 /**
- * @author Christoph Strobl
+ * @param <T>
+ * @param <ID>
+ * @author Partyk Wasik
  */
-public class SolrParametersParameterAccessor extends ParametersParameterAccessor implements SolrParameterAccessor {
+public interface ElasticSearchEntityInformation<T, ID extends Serializable> extends EntityInformation<T, ID> {
 
-	public SolrParametersParameterAccessor(SolrQueryMethod solrQueryMethod, Object[] values) {
-		super(solrQueryMethod.getParameters(), values);
-	}
+	String getIdAttribute();
+
+	String getIndexTypeName();
 
 }

@@ -26,12 +26,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.es.AbstractITestWithEmbeddedSolrServer;
 import org.springframework.data.es.core.SolrOperations;
 import org.springframework.data.es.core.SolrTemplate;
-import org.springframework.data.es.repository.config.EnableSolrRepositories;
+import org.springframework.data.es.repository.config.EnableElasticSearchRepositories;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
- * Integration test for {@link EnableSolrRepositories}.
+ * Integration test for {@link EnableElasticSearchRepositories}.
  * 
  * @author Oliver Gierke
  */
@@ -40,7 +40,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 public class ITestEnableSolrRepositories extends AbstractITestWithEmbeddedSolrServer {
 
 	@Configuration
-	@EnableSolrRepositories
+	@EnableElasticSearchRepositories
 	static class Config {
 
 		@Bean

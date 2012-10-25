@@ -30,10 +30,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.es.core.ElasticSearchOperations;
 import org.springframework.data.es.core.query.Criteria;
+import org.springframework.data.es.core.query.MatchAllCriteria;
 import org.springframework.data.es.core.query.SimpleFilterQuery;
 import org.springframework.data.es.core.query.SimpleQuery;
-import org.springframework.data.es.repository.query.SolrEntityInformation;
-import org.springframework.data.es.repository.support.SolrRepositoryFactory;
+import org.springframework.data.es.repository.query.ElasticSearchEntityInformation;
 import org.springframework.util.Assert;
 
 /**
@@ -50,15 +50,15 @@ public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudReposi
 
 	private ElasticSearchOperations elasticSearchOperations;
 	private Class<T> entityClass;
-	private SolrEntityInformation<T, String> entityInformation;
+	private ElasticSearchEntityInformation<T, String> entityInformation;
 	private String idFieldName = DEFAULT_ID_FIELD;
 
 	public SimpleElasticSearchRepository() {
 
 	}
 
-	public SimpleElasticSearchRepository(SolrEntityInformation<T, String> metadata, SolrOperations solrOperations) {
-		this(solrOperations);
+	public SimpleElasticSearchRepository(ElasticSearchEntityInformation<T, String> metadata, ElasticSearchOperations elasticSearchOperations) {
+		this(elasticSearchOperations);
 		Assert.notNull(metadata);
 
 		this.entityInformation = metadata;
@@ -66,13 +66,13 @@ public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudReposi
 		setEntityClass(this.entityInformation.getJavaType());
 	}
 
-	public SimpleElasticSearchRepository(SolrOperations solrOperations) {
+	public SimpleElasticSearchRepository(ElasticSearchOperations solrOperations) {
 		Assert.notNull(solrOperations);
 
-		this.setSolrOperations(solrOperations);
+		this.setElasticSearchOperations(solrOperations);
 	}
 
-	public SimpleElasticSearchRepository(SolrOperations solrOperations, Class<T> entityClass) {
+	public SimpleElasticSearchRepository(ElasticSearchOperations solrOperations, Class<T> entityClass) {
 		this(solrOperations);
 
 		this.setEntityClass(entityClass);
@@ -80,7 +80,7 @@ public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudReposi
 
 	@Override
 	public long count() {
-		return count(new SimpleQuery(new Criteria(Criteria.WILDCARD).expression(Criteria.WILDCARD)));
+		return elasticSearchOperations.count(new SimpleQuery(new MatchAllCriteria()), entityClass);
 	}
 
 	@Override
@@ -160,6 +160,10 @@ public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudReposi
 		return (T) getSolrOperations().executeObjectQuery(new SimpleQuery(new Criteria(this.idFieldName).is(id)), getEntityClass());
 	}
 
+	public final ElasticSearchOperations getElasticSearchOperations() {
+		return elasticSearchOperations;
+	}
+
 	public Class<T> getEntityClass() {
 		if (!isEntityClassSet()) {
 			try {
@@ -173,10 +177,6 @@ public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudReposi
 
 	public final String getIdFieldName() {
 		return idFieldName;
-	}
-
-	public final SolrOperations getSolrOperations() {
-		return elasticSearchOperations;
 	}
 
 	@Override
@@ -201,6 +201,12 @@ public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudReposi
 		return entity;
 	}
 
+	public final void setElasticSearchOperations(ElasticSearchOperations elasticSearchOperations) {
+		Assert.notNull(elasticSearchOperations, "SolrOperations must not be null.");
+
+		this.elasticSearchOperations = elasticSearchOperations;
+	}
+
 	public final void setEntityClass(Class<T> entityClass) {
 		Assert.notNull(entityClass, "EntityClass must not be null.");
 
@@ -211,12 +217,6 @@ public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudReposi
 		Assert.notNull(idFieldName, "ID Field cannot be null.");
 
 		this.idFieldName = idFieldName;
-	}
-
-	public final void setSolrOperations(SolrOperations solrOperations) {
-		Assert.notNull(solrOperations, "SolrOperations must not be null.");
-
-		this.elasticSearchOperations = solrOperations;
 	}
 
 	protected long count(org.springframework.data.es.core.query.Query query) {

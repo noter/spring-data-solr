@@ -22,7 +22,7 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.es.core.geo.Distance;
 import org.springframework.data.es.core.geo.GeoLocation;
-import org.springframework.data.es.core.mapping.SolrPersistentProperty;
+import org.springframework.data.es.core.mapping.ElasticSearchPersistentProperty;
 import org.springframework.data.es.core.query.Criteria;
 import org.springframework.data.es.core.query.Query;
 import org.springframework.data.es.core.query.SimpleQuery;
@@ -35,29 +35,23 @@ import org.springframework.data.repository.query.parser.Part.Type;
 import org.springframework.data.repository.query.parser.PartTree;
 
 /**
- * Solr specific implmentation of an {@link AbstractQueryCreator} that constructs {@link Query}
+ * ElasticSearch specific implmentation of an {@link AbstractQueryCreator} that
+ * constructs {@link Query}
  * 
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
-class SolrQueryCreator extends AbstractQueryCreator<Query, Query> {
+class ElasticSearchQueryCreator extends AbstractQueryCreator<Query, Query> {
 
-	private final MappingContext<?, SolrPersistentProperty> context;
+	private final MappingContext<?, ElasticSearchPersistentProperty> context;
 
-	public SolrQueryCreator(PartTree tree, MappingContext<?, SolrPersistentProperty> context) {
+	public ElasticSearchQueryCreator(PartTree tree, MappingContext<?, ElasticSearchPersistentProperty> context) {
 		super(tree);
 		this.context = context;
 	}
 
-	public SolrQueryCreator(PartTree tree, ParameterAccessor parameters, MappingContext<?, SolrPersistentProperty> context) {
+	public ElasticSearchQueryCreator(PartTree tree, ParameterAccessor parameters, MappingContext<?, ElasticSearchPersistentProperty> context) {
 		super(tree, parameters);
 		this.context = context;
-	}
-
-	@Override
-	protected Query create(Part part, Iterator<Object> iterator) {
-		PersistentPropertyPath<SolrPersistentProperty> path = context.getPersistentPropertyPath(part.getProperty());
-		return new SimpleQuery(from(part.getType(),
-				new Criteria(path.toDotPath(SolrPersistentProperty.PropertyToFieldNameConverter.INSTANCE)), iterator));
 	}
 
 	@Override
@@ -65,14 +59,9 @@ class SolrQueryCreator extends AbstractQueryCreator<Query, Query> {
 		if (base == null) {
 			return create(part, iterator);
 		}
-		PersistentPropertyPath<SolrPersistentProperty> path = context.getPersistentPropertyPath(part.getProperty());
+		PersistentPropertyPath<ElasticSearchPersistentProperty> path = context.getPersistentPropertyPath(part.getProperty());
 		return base.addCriteria(from(part.getType(),
-				new Criteria(path.toDotPath(SolrPersistentProperty.PropertyToFieldNameConverter.INSTANCE)), iterator));
-	}
-
-	@Override
-	protected Query or(Query base, Query query) {
-		return new SimpleQuery(base.getCriteria().or(query.getCriteria()));
+				new Criteria(path.toDotPath(ElasticSearchPersistentProperty.PropertyToFieldNameConverter.INSTANCE)), iterator));
 	}
 
 	@Override
@@ -81,6 +70,27 @@ class SolrQueryCreator extends AbstractQueryCreator<Query, Query> {
 			return null;
 		}
 		return query.addSort(sort);
+	}
+
+	@Override
+	protected Query create(Part part, Iterator<Object> iterator) {
+		PersistentPropertyPath<ElasticSearchPersistentProperty> path = context.getPersistentPropertyPath(part.getProperty());
+		return new SimpleQuery(from(part.getType(),
+				new Criteria(path.toDotPath(ElasticSearchPersistentProperty.PropertyToFieldNameConverter.INSTANCE)), iterator));
+	}
+
+	@Override
+	protected Query or(Query base, Query query) {
+		return new SimpleQuery(base.getCriteria().or(query.getCriteria()));
+	}
+
+	private Object[] asArray(Object o) {
+		if (o instanceof Collection) {
+			return ((Collection<?>) o).toArray();
+		} else if (o.getClass().isArray()) {
+			return (Object[]) o;
+		}
+		return new Object[] { o };
 	}
 
 	private Criteria from(Type type, Criteria instance, Iterator<?> parameters) {
@@ -124,15 +134,6 @@ class SolrQueryCreator extends AbstractQueryCreator<Query, Query> {
 			return criteria.near((GeoLocation) parameters.next(), (Distance) parameters.next());
 		}
 		throw new InvalidDataAccessApiUsageException("Illegal criteria found '" + type + "'.");
-	}
-
-	private Object[] asArray(Object o) {
-		if (o instanceof Collection) {
-			return ((Collection<?>) o).toArray();
-		} else if (o.getClass().isArray()) {
-			return (Object[]) o;
-		}
-		return new Object[] { o };
 	}
 
 }

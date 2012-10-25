@@ -36,7 +36,7 @@ import org.springframework.data.es.core.query.Query;
 import org.springframework.data.es.repository.ProductBean;
 import org.springframework.data.es.repository.query.SolrEntityInformationCreator;
 import org.springframework.data.es.repository.query.SolrParametersParameterAccessor;
-import org.springframework.data.es.repository.query.SolrQueryCreator;
+import org.springframework.data.es.repository.query.ElasticSearchQueryCreator;
 import org.springframework.data.es.repository.query.SolrQueryMethod;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -67,7 +67,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { 100 }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -82,7 +82,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { 100 }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -97,7 +97,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { 100, 200f }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -112,7 +112,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { 100, 200f }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -127,7 +127,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] {}), mappingContext);
 
 		Query query = creator.createQuery();
@@ -142,7 +142,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] {}), mappingContext);
 
 		Query query = creator.createQuery();
@@ -157,7 +157,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { "j73x73r" }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -172,7 +172,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { "christoph" }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -187,7 +187,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { "solr" }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -202,7 +202,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { "(\\+ \\*)" }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -217,7 +217,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { 100, 200 }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -232,7 +232,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { new DateTime(2012, 10, 15, 5, 31, 0, DateTimeZone.UTC)  }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -247,7 +247,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { 100f }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -262,7 +262,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { new DateTime(2012, 10, 15, 5, 31, 0, DateTimeZone.UTC)  }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -277,7 +277,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { 10f }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -292,7 +292,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { new Object[] { 1, 2, 3 } }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -307,7 +307,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { new Object[] { 1, 2, 3 } }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -322,7 +322,7 @@ public class SolrQueryCreatorTest {
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { new GeoLocation(48.303056, 14.290556), new Distance(5) }), mappingContext);
 
 		Query query = creator.createQuery();
@@ -336,7 +336,7 @@ public class SolrQueryCreatorTest {
 		Method method = SampleRepository.class.getMethod("findByPopularityOrderByTitleDesc", Integer.class);
 		PartTree partTree = new PartTree(method.getName(), method.getReturnType());
 		SolrQueryMethod queryMethod = new SolrQueryMethod(method, metadataMock, entityInformationCreatorMock);
-		SolrQueryCreator creator = new SolrQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
+		ElasticSearchQueryCreator creator = new ElasticSearchQueryCreator(partTree, new SolrParametersParameterAccessor(queryMethod,
 				new Object[] { 1 }), mappingContext);
 
 		Query query = creator.createQuery();

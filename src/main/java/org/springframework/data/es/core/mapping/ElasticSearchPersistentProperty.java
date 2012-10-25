@@ -15,6 +15,7 @@
  */
 package org.springframework.data.es.core.mapping;
 
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.mapping.PersistentProperty;
 
 /**
@@ -194,6 +195,16 @@ public interface ElasticSearchPersistentProperty extends PersistentProperty<Elas
 			this.termVector = termVector;
 		}
 
+	}
+
+	public enum PropertyToFieldNameConverter implements Converter<ElasticSearchPersistentProperty, String> {
+
+		INSTANCE;
+
+		@Override
+		public String convert(ElasticSearchPersistentProperty source) {
+			return source.getIndexName();
+		}
 	}
 
 	String getIndexName();
