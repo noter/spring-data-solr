@@ -27,7 +27,7 @@ import org.junit.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.es.AbstractITestWithEmbeddedSolrServer;
+import org.springframework.data.es.AbstractITestWithEmbeddedElasticSearch;
 import org.springframework.data.es.HttpSolrServerFactory;
 import org.springframework.data.es.core.SolrTemplate;
 import org.springframework.data.es.repository.ProductBean;
@@ -38,7 +38,7 @@ import org.springframework.data.es.repository.support.SolrRepositoryFactory;
 /**
  * @author Christoph Strobl
  */
-public class ITestSolrRepositoryFactory extends AbstractITestWithEmbeddedSolrServer {
+public class ITestSolrRepositoryFactory extends AbstractITestWithEmbeddedElasticSearch {
 
 	private SolrRepositoryFactory factory;
 

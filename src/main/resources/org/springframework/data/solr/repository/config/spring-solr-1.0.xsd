@@ -17,52 +17,55 @@
 			<xsd:complexContent>
 				<xsd:extension base="repository:repositories">
 					<xsd:attributeGroup ref="repository:transactional-repository-attributes" />
-					<xsd:attribute name="es-template-ref" type="esTemplateRef" default="esTemplate" />
+					<xsd:attribute name="elasticsearch-template-ref" type="elasticSearchTemplateRef" default="elasticSearchTemplate" />
 				</xsd:extension>
 			</xsd:complexContent>
 		</xsd:complexType>
 	</xsd:element>
 
-	<xsd:simpleType name="esTemplateRef">
+	<xsd:simpleType name="elasticSearchTemplateRef">
 		<xsd:annotation>
 			<xsd:appinfo>
 				<tool:annotation kind="ref">
-					<tool:assignable-to type="org.springframework.data.solr.core.SolrTemplate" />
+					<tool:assignable-to type="org.springframework.data.es.core.ElasticSearchTemplate" />
 				</tool:annotation>
 			</xsd:appinfo>
 		</xsd:annotation>
 		<xsd:union memberTypes="xsd:string" />
 	</xsd:simpleType>
 	
-	<xsd:element name="embedded-solr-server">
+	<xsd:element name="embedded-es-node">
 		<xsd:annotation>
-			<xsd:documentation source="java: org.springframework.data.solr.embedded.support.EmbeddedSolrServerFactoryBean" />
+			<xsd:documentation source="java: org.springframework.data.es.embedded.support.EmbeddedElasticSearchFactoryBean" />
 			<xsd:appinfo>
-				<tool:assignable-to type="org.apache.solr.client.solrj.SolrServer "/>
+				<tool:assignable-to type="org.elasticsearch.client.Client"/>
 			</xsd:appinfo>
 		</xsd:annotation>
 		<xsd:complexType>
 			<xsd:complexContent>
 				<xsd:extension base="beans:identifiedType">
-				    <xsd:attribute name="solrHome" type="xsd:string" />
+				    <xsd:attribute name="defaultIndexName" type="xsd:string" />
 				</xsd:extension>
 			</xsd:complexContent>
 		</xsd:complexType>
 	</xsd:element>
 	
-	<xsd:element name="solr-server">
+	<xsd:element name="es-client">
 		<xsd:annotation>
-			<xsd:documentation source="java: org.springframework.data.solr.support.HttpSolrServerFactoryBean" />
+			<xsd:documentation source="java: org.springframework.data.es.support.TransportClientElasticSearchClientFactoryBean" />
 			<xsd:appinfo>
-				<tool:assignable-to type="org.apache.solr.client.solrj.SolrServer "/>
+				<tool:assignable-to type="org.elasticsearch.client.Client"/>
 			</xsd:appinfo>
 		</xsd:annotation>
 		<xsd:complexType>
 			<xsd:complexContent>
 				<xsd:extension base="beans:identifiedType">
-				    <xsd:attribute name="url" type="xsd:string" />
-				    <xsd:attribute name="timeout" type="xsd:int" use="optional" default="100"/>
-				    <xsd:attribute name="maxConnections" type="xsd:int" use="optional" default="100" />
+					<xsd:sequence>
+						<xsd:element name="addresses" type="xsd:string" minOccurs="1"/>
+					</xsd:sequence>
+				    <xsd:attribute name="ignoreClusterName" type="xsd:boolean" use="optional"/>
+				    <xsd:attribute name="nodeSamplerInterval" type="xsd:int" use="optional"/>
+				    <xsd:attribute name="pingTimeout" type="xsd:int" use="optional"/>
 				</xsd:extension>
 			</xsd:complexContent>
 		</xsd:complexType>

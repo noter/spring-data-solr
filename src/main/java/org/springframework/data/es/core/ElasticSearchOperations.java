@@ -26,7 +26,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.springframework.data.domain.Page;
 import org.springframework.data.es.core.convert.ElasticSearchConverter;
-import org.springframework.data.es.core.query.ESDataQuery;
+import org.springframework.data.es.core.query.ElasticSearchDataQuery;
 import org.springframework.data.es.core.query.FacetQuery;
 import org.springframework.data.es.core.query.Query;
 import org.springframework.data.es.core.query.result.FacetPage;
@@ -61,7 +61,7 @@ public interface ElasticSearchOperations {
 	 * @param query
 	 * @return
 	 */
-	long count(ESDataQuery query, Class<?>... types);
+	long count(ElasticSearchDataQuery query, Class<?>... types);
 
 	/**
 	 * return number of elements found by for given query in given inidcates
@@ -69,7 +69,7 @@ public interface ElasticSearchOperations {
 	 * @param query
 	 * @return
 	 */
-	long count(ESDataQuery query, String... indices);
+	long count(ElasticSearchDataQuery query, String... indices);
 
 	/**
 	 * return number of elements found by for given query in given inidcates and
@@ -78,7 +78,7 @@ public interface ElasticSearchOperations {
 	 * @param query
 	 * @return
 	 */
-	long count(ESDataQuery query, String[] indices, Class<?>... types);
+	long count(ElasticSearchDataQuery query, String[] indices, Class<?>... types);
 
 	/**
 	 * Find and delete all objects matching the provided Query and types
@@ -86,7 +86,7 @@ public interface ElasticSearchOperations {
 	 * @param query
 	 * @return
 	 */
-	DeleteByQueryResponse delete(ESDataQuery query, Class<?>... types);
+	DeleteByQueryResponse delete(ElasticSearchDataQuery query, Class<?>... types);
 
 	/**
 	 * Find and delete all objects matching the provided Query in given indices
@@ -95,7 +95,7 @@ public interface ElasticSearchOperations {
 	 * @return
 	 */
 
-	DeleteByQueryResponse delete(ESDataQuery query, String... indices);
+	DeleteByQueryResponse delete(ElasticSearchDataQuery query, String... indices);
 
 	/**
 	 * Find and delete all objects matching the provided Query and types in
@@ -104,7 +104,7 @@ public interface ElasticSearchOperations {
 	 * @param query
 	 * @return
 	 */
-	DeleteByQueryResponse delete(ESDataQuery query, String[] indices, Class<?>... types);
+	DeleteByQueryResponse delete(ElasticSearchDataQuery query, String[] indices, Class<?>... types);
 
 	/**
 	 * Delete objects with given ids and type
@@ -142,6 +142,15 @@ public interface ElasticSearchOperations {
 	<T> Page<T> findAll(Query query, Class<T> clazz);
 
 	/**
+	 * Get bean by id
+	 * 
+	 * @param id
+	 * @param clazz
+	 * @return
+	 */
+	<T> T findById(String id, Class<T> clazz);
+
+	/**
 	 * Execute the query against ElasticSearch and return the first returned
 	 * object
 	 * 
@@ -169,7 +178,21 @@ public interface ElasticSearchOperations {
 	 * @param query
 	 * @return
 	 */
-	SearchResponse query(ESDataQuery query);
+	SearchResponse query(ElasticSearchDataQuery query);
+
+	/**
+	 * Refresh indexes for given types to perform near realtime operation
+	 * 
+	 * @param types
+	 */
+	void refresh(Class<?>... types);
+
+	/**
+	 * Refresh indexes to perform near realtime operation
+	 * 
+	 * @param indices
+	 */
+	void refresh(String... indices);
 
 	/**
 	 * Add a collection of beans to es

@@ -23,20 +23,20 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.util.TypeInformation;
 
 /**
- * @author Christoph Strobl
+ * @author Patryk Wasik
  * 
  */
-public class SimpleESMappingContext extends AbstractMappingContext<SimpleESPersistentEntity<?>, ElasticSearchPersistentProperty> {
+public class SimpleElasticSearchMappingContext extends AbstractMappingContext<SimpleElasticSearchPersistentEntity<?>, ElasticSearchPersistentProperty> {
 
 	@Override
-	protected <T> SimpleESPersistentEntity<?> createPersistentEntity(TypeInformation<T> typeInformation) {
-		return new SimpleESPersistentEntity<T>(typeInformation);
+	protected <T> SimpleElasticSearchPersistentEntity<?> createPersistentEntity(TypeInformation<T> typeInformation) {
+		return new SimpleElasticSearchPersistentEntity<T>(typeInformation);
 	}
 
 	@Override
-	protected ElasticSearchPersistentProperty createPersistentProperty(Field field, PropertyDescriptor descriptor, SimpleESPersistentEntity<?> owner,
+	protected ElasticSearchPersistentProperty createPersistentProperty(Field field, PropertyDescriptor descriptor, SimpleElasticSearchPersistentEntity<?> owner,
 			SimpleTypeHolder simpleTypeHolder) {
-		return new SimpleESPersistentProperty(field, descriptor, owner, simpleTypeHolder);
+		return new SimpleElasticSearchPersistentProperty(field, descriptor, owner, simpleTypeHolder);
 	}
 
 }

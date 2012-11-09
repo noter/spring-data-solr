@@ -36,6 +36,6 @@ public interface FacetQuery extends Query {
 	 * @param facetOptions
 	 * @return
 	 */
-	<T extends ESDataQuery> T setFacetOptions(FacetOptions facetOptions);
+	<T extends ElasticSearchDataQuery> T setFacetOptions(FacetOptions facetOptions);
 
 }

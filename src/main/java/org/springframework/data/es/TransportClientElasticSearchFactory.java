@@ -17,25 +17,27 @@ package org.springframework.data.es;
 
 import org.elasticsearch.client.Client;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.util.Assert;
 
 /**
  * @author Patryk Wąsik
  */
-public class TransportClientESClientFactory implements ESClientFactory, DisposableBean {
+public class TransportClientElasticSearchFactory implements ElasticSearchClientFactory, DisposableBean {
 
 	private Client client;
 	private String defaultIndexName;
 
-	public TransportClientESClientFactory(Client client) {
+	public TransportClientElasticSearchFactory(Client client) {
+		Assert.notNull(client);
 		this.client = client;
 	}
 
-	public TransportClientESClientFactory(Client client, String defaultIndexName) {
+	public TransportClientElasticSearchFactory(Client client, String defaultIndexName) {
 		this.client = client;
 		this.defaultIndexName = defaultIndexName;
 	}
 
-	protected TransportClientESClientFactory() {
+	protected TransportClientElasticSearchFactory() {
 
 	}
 

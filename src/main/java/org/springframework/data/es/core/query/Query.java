@@ -25,7 +25,7 @@ import org.springframework.data.domain.Sort;
  * 
  * @author Paryk Wasik
  */
-public interface Query extends ESDataQuery {
+public interface Query extends ElasticSearchDataQuery {
 
 	int DEFAULT_PAGE_SIZE = 10;
 

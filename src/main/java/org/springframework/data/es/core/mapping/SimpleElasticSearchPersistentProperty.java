@@ -36,7 +36,7 @@ import org.springframework.util.StringUtils;
  * @author Patryk Wasik
  * 
  */
-public class SimpleESPersistentProperty extends AnnotationBasedPersistentProperty<ElasticSearchPersistentProperty> implements
+public class SimpleElasticSearchPersistentProperty extends AnnotationBasedPersistentProperty<ElasticSearchPersistentProperty> implements
 		ElasticSearchPersistentProperty {
 
 	private static final Set<String> SUPPORTED_ID_PROPERTY_NAMES = new HashSet<String>();
@@ -49,8 +49,8 @@ public class SimpleESPersistentProperty extends AnnotationBasedPersistentPropert
 
 	private MappingInfo[] mappingInfos;
 
-	public SimpleESPersistentProperty(Field field, PropertyDescriptor propertyDescriptor, PersistentEntity<?, ElasticSearchPersistentProperty> owner,
-			SimpleTypeHolder simpleTypeHolder) {
+	public SimpleElasticSearchPersistentProperty(Field field, PropertyDescriptor propertyDescriptor,
+			PersistentEntity<?, ElasticSearchPersistentProperty> owner, SimpleTypeHolder simpleTypeHolder) {
 		super(field, propertyDescriptor, owner, simpleTypeHolder);
 		derivateESFieldInfoFromField(field);
 	}
@@ -128,8 +128,8 @@ public class SimpleESPersistentProperty extends AnnotationBasedPersistentPropert
 	}
 
 	private void readMappingInfo(ESField esField, MappingInfo mappingInfo) {
-		if (StringUtils.hasText(esField.indexName())) {
-			mappingInfo.setIndexName(esField.indexName());
+		if (StringUtils.hasText(esField.value())) {
+			mappingInfo.setIndexName(esField.value());
 		}
 		if (esField.boost() != 1.0) {
 			mappingInfo.setBoost(esField.boost());

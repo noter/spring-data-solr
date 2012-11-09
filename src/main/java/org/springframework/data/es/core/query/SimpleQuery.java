@@ -90,11 +90,14 @@ public class SimpleQuery extends AbstractQuery implements Query, FilterQuery {
 	@SuppressWarnings("unchecked")
 	@Override
 	public final <T extends Query> T addGroupByField(Field field) {
-		Assert.notNull(field, "Field for grouping must not be null.");
-		Assert.hasText(field.getName(), "Field.name for grouping must not be null/empty.");
-
-		groupByFields.add(field);
-		return (T) this;
+		throw new UnsupportedOperationException("Not implemented yet");
+		/*
+		 * Assert.notNull(field, "Field for grouping must not be null.");
+		 * Assert.hasText(field.getName(),
+		 * "Field.name for grouping must not be null/empty.");
+		 * 
+		 * groupByFields.add(field); return (T) this;
+		 */
 	}
 
 	public final <T extends Query> T addGroupByField(String fieldname) {

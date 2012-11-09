@@ -15,17 +15,16 @@
  */
 package org.springframework.data.es.core;
 
-import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.common.params.CommonParams;
-import org.apache.solr.common.params.FacetParams;
-import org.apache.solr.common.params.GroupParams;
-import org.junit.Assert;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.search.facet.terms.TermsFacet.ComparatorType;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.es.core.QueryParser;
+import org.springframework.data.es.AbstractITestWithEmbeddedElasticSearch;
 import org.springframework.data.es.core.query.Criteria;
 import org.springframework.data.es.core.query.FacetOptions;
 import org.springframework.data.es.core.query.FacetQuery;
@@ -37,146 +36,96 @@ import org.springframework.data.es.core.query.SimpleQuery;
 import org.springframework.data.es.core.query.SimpleStringCriteria;
 
 /**
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
-public class QueryParserTest {
+public class QueryParserTest extends AbstractITestWithEmbeddedElasticSearch {
 
 	private QueryParser queryParser;
 
 	@Before
 	public void setUp() {
-		this.queryParser = new QueryParser();
+		queryParser = new QueryParser();
 	}
 
 	@Test
-	public void testConstructSimpleSolrQuery() {
-		Query query = new SimpleQuery(new Criteria("field_1").is("value_1"));
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertNotNull(solrQuery);
-		assertQueryStringPresent(solrQuery);
-		assertPaginationNotPresent(solrQuery);
-		assertProjectionNotPresent(solrQuery);
-		assertGroupingNotPresent(solrQuery);
-		assertFactingNotPresent(solrQuery);
+	public void testConstructESSearchQueryWithFacetSort() {
+		FacetQuery query = new SimpleFacetQuery(new Criteria("field_1").is("value_1")).setFacetOptions(new FacetOptions("facet_1")
+				.setFacetSort(ComparatorType.COUNT));
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
+
+		assertThat(toSingleLineString(searchRequestBuilder),
+				is("{query:{bool:{must:{bool:{must:{field:{field_1:value_1}}}}}},facets:{facet_1:{terms:{field:facet_1,size:10,order:count}}}}"));
+
+		query.getFacetOptions().setFacetSort(ComparatorType.TERM);
+		query.getFacetOptions().setFacetLimit(5);
+		searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
+
+		assertThat(toSingleLineString(searchRequestBuilder),
+				is("{query:{bool:{must:{bool:{must:{field:{field_1:value_1}}}}}},facets:{facet_1:{terms:{field:facet_1,size:5,order:term}}}}"));
+
 	}
 
 	@Test
-	public void testConstructSolrQueryWithPagination() {
+	public void testConstructESSearchQueryWithMultipleFacet() {
+		FacetQuery query = new SimpleFacetQuery(new Criteria("field_1").is("value_1")).setFacetOptions(new FacetOptions("facet_1", "facet_2"));
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
+		assertThat(
+				toSingleLineString(searchRequestBuilder),
+				is("{query:{bool:{must:{bool:{must:{field:{field_1:value_1}}}}}},facets:{facet_1:{terms:{field:facet_1,size:10,order:count}},facet_2:{terms:{field:facet_2,size:10,order:count}}}}"));
+	}
+
+	@Test
+	public void testConstructESSearchQueryWithPagination() {
 		int page = 1;
 		int pageSize = 100;
-		Query query = new SimpleQuery(new Criteria("field_1").is("value_1"))
-				.setPageRequest(new PageRequest(page, pageSize));
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertNotNull(solrQuery);
-		assertQueryStringPresent(solrQuery);
-		assertPaginationPresent(solrQuery, page * pageSize, pageSize);
-		assertProjectionNotPresent(solrQuery);
-		assertGroupingNotPresent(solrQuery);
-		assertFactingNotPresent(solrQuery);
+		Query query = new SimpleQuery(new Criteria("field_1").is("value_1")).setPageRequest(new PageRequest(page, pageSize));
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
+		assertThat(toSingleLineString(searchRequestBuilder), is("{from:100,size:100,query:{bool:{must:{bool:{must:{field:{field_1:value_1}}}}}}}"));
 	}
 
 	@Test
-	public void testConstructSimpleSolrQueryWithProjection() {
-		Query query = new SimpleQuery(new Criteria("field_1").is("value_1")).addProjectionOnField("projection_1")
-				.addProjectionOnField(new SimpleField("projection_2"));
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertNotNull(solrQuery);
-		assertQueryStringPresent(solrQuery);
-		assertPaginationNotPresent(solrQuery);
-		assertProjectionPresent(solrQuery, "projection_1,projection_2");
-		assertGroupingNotPresent(solrQuery);
-		assertFactingNotPresent(solrQuery);
+	public void testConstructESSearchQueryWithSingleFacet() {
+		Query query = new SimpleFacetQuery(new Criteria("field_1").is("value_1")).setFacetOptions(new FacetOptions("facet_1"));
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
+		assertThat(toSingleLineString(searchRequestBuilder),
+				is("{query:{bool:{must:{bool:{must:{field:{field_1:value_1}}}}}},facets:{facet_1:{terms:{field:facet_1,size:10,order:count}}}}"));
 	}
 
 	@Test
-	public void testConstructSolrQueryWithSingleGroupBy() {
-		Query query = new SimpleQuery(new Criteria("field_1").is("value_1")).addGroupByField("group_1");
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertNotNull(solrQuery);
-		assertQueryStringPresent(solrQuery);
-		assertPaginationNotPresent(solrQuery);
-		assertProjectionNotPresent(solrQuery);
-		assertGroupingPresent(solrQuery, "group_1");
-		assertFactingNotPresent(solrQuery);
-	}
-
-	@Test(expected = InvalidDataAccessApiUsageException.class)
-	public void testConstructSolrQueryWithMultiGroupBy() {
-		Query query = new SimpleQuery(new Criteria("field_1").is("value_1")).addGroupByField("group_1").addGroupByField(
-				new SimpleField("group_2"));
-		queryParser.constructSolrQuery(query);
+	public void testConstructSimpleElasticSearchQuery() {
+		Query query = new SimpleQuery(new Criteria("field_1").is("value_1"));
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
+		assertThat(toSingleLineString(searchRequestBuilder), is("{query:{bool:{must:{bool:{must:{field:{field_1:value_1}}}}}}}"));
 	}
 
 	@Test
-	public void testConstructSolrQueryWithSingleFacet() {
-		Query query = new SimpleFacetQuery(new Criteria("field_1").is("value_1")).setFacetOptions(new FacetOptions(
-				"facet_1"));
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertNotNull(solrQuery);
-		assertQueryStringPresent(solrQuery);
-		assertPaginationNotPresent(solrQuery);
-		assertProjectionNotPresent(solrQuery);
-		assertGroupingNotPresent(solrQuery);
-		assertFactingPresent(solrQuery, "facet_1");
-	}
+	public void testConstructSimpleElasticSearchQueryWithProjection() {
+		Query query = new SimpleQuery(new Criteria("field_1").is("value_1")).addProjectionOnField("projection_1").addProjectionOnField(
+				new SimpleField("projection_2"));
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
+		assertThat(
+				toSingleLineString(searchRequestBuilder),
+				is("{query:{bool:{must:{bool:{must:{field:{field_1:value_1}}}}}},facets:{projection_1:{terms:{field:projection_1,size:10}},projection_2:{terms:{field:projection_2,size:10}}}}"));
 
-	@Test
-	public void testConstructSolrQueryWithMultipleFacet() {
-		FacetQuery query = new SimpleFacetQuery(new Criteria("field_1").is("value_1")).setFacetOptions(new FacetOptions(
-				"facet_1", "facet_2"));
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertNotNull(solrQuery);
-		assertQueryStringPresent(solrQuery);
-		assertPaginationNotPresent(solrQuery);
-		assertProjectionNotPresent(solrQuery);
-		assertGroupingNotPresent(solrQuery);
-		assertFactingPresent(solrQuery, "facet_1", "facet_2");
-	}
-
-	@Test
-	public void testConstructSolrQueryWithFacetSort() {
-		FacetQuery query = new SimpleFacetQuery(new Criteria("field_1").is("value_1")).setFacetOptions(new FacetOptions(
-				"facet_1").setFacetSort(FacetOptions.FacetSort.INDEX));
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertEquals("index", solrQuery.getFacetSortString());
-
-		query.getFacetOptions().setFacetSort(FacetOptions.FacetSort.COUNT);
-		solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertEquals("count", solrQuery.getFacetSortString());
-	}
-
-	@Test
-	public void testWithFilterQuery() {
-		Query query = new SimpleQuery(new Criteria("field_1").is("value_1")).addFilterQuery(new SimpleFilterQuery(
-				new Criteria("filter_field").is("filter_value")));
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-
-		String[] filterQueries = solrQuery.getFilterQueries();
-		Assert.assertEquals(1, filterQueries.length);
-		Assert.assertEquals("filter_field:filter_value", filterQueries[0]);
 	}
 
 	@Test
 	public void testWithEmptyFilterQuery() {
 		Query query = new SimpleQuery(new Criteria("field_1").is("value_1")).addFilterQuery(new SimpleQuery());
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
 
-		Assert.assertNull(solrQuery.getFilterQueries());
+		assertThat(toSingleLineString(searchRequestBuilder), is("{query:{bool:{must:{bool:{must:{field:{field_1:value_1}}}}}}}"));
 	}
 
 	@Test
-	public void testWithSimpleStringCriteria() {
-		SimpleStringCriteria criteria = new SimpleStringCriteria("field_1:value_1");
-		Query query = new SimpleQuery(criteria);
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertNotNull(solrQuery);
-		assertQueryStringPresent(solrQuery);
-		assertPaginationNotPresent(solrQuery);
-		assertProjectionNotPresent(solrQuery);
-		assertGroupingNotPresent(solrQuery);
-		assertFactingNotPresent(solrQuery);
+	public void testWithFilterQuery() {
+		Query query = new SimpleQuery(new Criteria("field_1").is("value_1")).addFilterQuery(new SimpleFilterQuery(new Criteria("filter_field")
+				.is("filter_value")));
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
 
-		Assert.assertEquals(criteria.getQueryString(), solrQuery.getQuery());
+		assertThat(
+				toSingleLineString(searchRequestBuilder),
+				is("{query:{bool:{must:{bool:{must:{field:{field_1:value_1}}}}}},filter:{bool:{must:{and:{filters:[{query:{field:{filter_field:filter_value}}}]}}}}}"));
 	}
 
 	@Test
@@ -185,9 +134,26 @@ public class QueryParserTest {
 		Query query = new SimpleQuery(criteria);
 		query.addSort(null); // do this explicitly
 
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertNull(solrQuery.getSortField());
-		Assert.assertNull(solrQuery.getSortFields());
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
+		assertThat(toSingleLineString(searchRequestBuilder), is("{query:{query_string:{query:field_1:value_1}}}"));
+	}
+
+	@Test
+	public void testWithSimpleStringCriteria() {
+		SimpleStringCriteria criteria = new SimpleStringCriteria("field_1:value_1");
+		Query query = new SimpleQuery(criteria);
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
+		assertThat(toSingleLineString(searchRequestBuilder), is("{query:{query_string:{query:field_1:value_1}}}"));
+	}
+
+	@Test
+	public void testWithSortAscMultipleFields() {
+		SimpleStringCriteria criteria = new SimpleStringCriteria("field_1:value_1");
+		Query query = new SimpleQuery(criteria);
+		query.addSort(new Sort("field_2", "field_3"));
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
+		assertThat(toSingleLineString(searchRequestBuilder),
+				is("{query:{query_string:{query:field_1:value_1}},sort:[{field_2:{order:asc}},{field_3:{order:asc}}]}"));
 	}
 
 	@Test
@@ -195,9 +161,19 @@ public class QueryParserTest {
 		SimpleStringCriteria criteria = new SimpleStringCriteria("field_1:value_1");
 		Query query = new SimpleQuery(criteria);
 		query.addSort(new Sort("field_2"));
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertEquals("field_2 asc", solrQuery.getSortField());
-		Assert.assertEquals(1, solrQuery.getSortFields().length);
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
+		assertThat(toSingleLineString(searchRequestBuilder), is("{query:{query_string:{query:field_1:value_1}},sort:[{field_2:{order:asc}}]}"));
+	}
+
+	@Test
+	public void testWithSortDescMultipleFields() {
+		SimpleStringCriteria criteria = new SimpleStringCriteria("field_1:value_1");
+		Query query = new SimpleQuery(criteria);
+		query.addSort(new Sort(Sort.Direction.DESC, "field_2", "field_3"));
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
+		assertThat(toSingleLineString(searchRequestBuilder),
+				is("{query:{query_string:{query:field_1:value_1}},sort:[{field_2:{order:desc}},{field_3:{order:desc}}]}"));
+
 	}
 
 	@Test
@@ -205,29 +181,8 @@ public class QueryParserTest {
 		SimpleStringCriteria criteria = new SimpleStringCriteria("field_1:value_1");
 		Query query = new SimpleQuery(criteria);
 		query.addSort(new Sort(Sort.Direction.DESC, "field_2"));
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertEquals("field_2 desc", solrQuery.getSortField());
-		Assert.assertEquals(1, solrQuery.getSortFields().length);
-	}
-
-	@Test
-	public void testWithSortAscMultipleFields() {
-		SimpleStringCriteria criteria = new SimpleStringCriteria("field_1:value_1");
-		Query query = new SimpleQuery(criteria);
-		query.addSort(new Sort("field_2, field_3"));
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertEquals("field_2, field_3 asc", solrQuery.getSortField());
-		Assert.assertEquals(2, solrQuery.getSortFields().length);
-	}
-
-	@Test
-	public void testWithSortDescMultipleFields() {
-		SimpleStringCriteria criteria = new SimpleStringCriteria("field_1:value_1");
-		Query query = new SimpleQuery(criteria);
-		query.addSort(new Sort(Sort.Direction.DESC, "field_2, field_3"));
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertEquals("field_2, field_3 desc", solrQuery.getSortField());
-		Assert.assertEquals(2, solrQuery.getSortFields().length);
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
+		assertThat(toSingleLineString(searchRequestBuilder), is("{query:{query_string:{query:field_1:value_1}},sort:[{field_2:{order:desc}}]}"));
 	}
 
 	@Test
@@ -235,54 +190,13 @@ public class QueryParserTest {
 		SimpleStringCriteria criteria = new SimpleStringCriteria("field_1:value_1");
 		Query query = new SimpleQuery(criteria);
 		query.addSort(new Sort("field_1"));
-		query.addSort(new Sort(Sort.Direction.DESC, "field_2, field_3"));
-		SolrQuery solrQuery = queryParser.constructSolrQuery(query);
-		Assert.assertEquals("field_1 asc,field_2, field_3 desc", solrQuery.getSortField());
-		Assert.assertEquals(3, solrQuery.getSortFields().length);
+		query.addSort(new Sort(Sort.Direction.DESC, "field_2", "field_3"));
+		SearchRequestBuilder searchRequestBuilder = queryParser.constructESSearchQuery(query, client);
+		assertThat(toSingleLineString(searchRequestBuilder),
+				is("{query:{query_string:{query:field_1:value_1}},sort:[{field_1:{order:asc}},{field_2:{order:desc}},{field_3:{order:desc}}]}"));
 	}
 
-	private void assertFactingPresent(SolrQuery solrQuery, String... expected) {
-		Assert.assertArrayEquals(expected, solrQuery.getFacetFields());
+	private String toSingleLineString(SearchRequestBuilder searchRequestBuilder) {
+		return searchRequestBuilder.toString().replaceAll("\n", "").replaceAll("\\s*", "").replaceAll("\"", "").trim();
 	}
-
-	private void assertFactingNotPresent(SolrQuery solrQuery) {
-		Assert.assertNull(solrQuery.get(FacetParams.FACET_FIELD));
-	}
-
-	private void assertQueryStringPresent(SolrQuery solrQuery) {
-		Assert.assertNotNull(solrQuery.get(CommonParams.Q));
-	}
-
-	private void assertProjectionNotPresent(SolrQuery solrQuery) {
-		Assert.assertNull(solrQuery.getFields());
-	}
-
-	private void assertProjectionPresent(SolrQuery solrQuery, String expected) {
-		Assert.assertNotNull(solrQuery.get(CommonParams.FL));
-		Assert.assertEquals(expected, solrQuery.get(CommonParams.FL));
-	}
-
-	private void assertPaginationNotPresent(SolrQuery solrQuery) {
-		Assert.assertNull(solrQuery.getStart());
-		Assert.assertNull(solrQuery.getRows());
-	}
-
-	private void assertPaginationPresent(SolrQuery solrQuery, int start, int rows) {
-		Assert.assertEquals(Integer.valueOf(start), solrQuery.getStart());
-		Assert.assertEquals(Integer.valueOf(rows), solrQuery.getRows());
-	}
-
-	private void assertGroupingNotPresent(SolrQuery solrQuery) {
-		Assert.assertNull(solrQuery.get(GroupParams.GROUP));
-		Assert.assertNull(solrQuery.get(GroupParams.GROUP_FIELD));
-		Assert.assertNull(solrQuery.get(GroupParams.GROUP_MAIN));
-	}
-
-	private void assertGroupingPresent(SolrQuery solrQuery, String expected) {
-		Assert.assertNotNull(solrQuery.get(GroupParams.GROUP));
-		Assert.assertNotNull(solrQuery.get(GroupParams.GROUP_FIELD));
-		Assert.assertNotNull(solrQuery.get(GroupParams.GROUP_MAIN));
-		Assert.assertEquals(expected, solrQuery.get(GroupParams.GROUP_FIELD));
-	}
-
 }

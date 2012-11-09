@@ -74,8 +74,6 @@ public @interface ESField {
 	 */
 	String indexAnalyzer() default "";
 
-	String indexName() default "";
-
 	/**
 	 * String field
 	 * 
@@ -121,5 +119,7 @@ public @interface ESField {
 	 * @return
 	 */
 	String termVector() default "";
+
+	String value() default "";
 
 }

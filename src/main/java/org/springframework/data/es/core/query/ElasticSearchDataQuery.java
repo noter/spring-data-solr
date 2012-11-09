@@ -20,7 +20,7 @@ package org.springframework.data.es.core.query;
  * 
  * @author Patryk Wasik
  */
-public interface ESDataQuery {
+public interface ElasticSearchDataQuery {
 
 	/**
 	 * Append criteria to query. Criteria must not be null, nor point to a field
@@ -29,7 +29,7 @@ public interface ESDataQuery {
 	 * @param criteria
 	 * @return
 	 */
-	<T extends ESDataQuery> T addCriteria(Criteria criteria);
+	<T extends ElasticSearchDataQuery> T addCriteria(Criteria criteria);
 
 	/**
 	 * 

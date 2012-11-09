@@ -19,10 +19,10 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
 /**
- * The most basic criteria holding an already formatted QueryString that can be
- * executed 'as is' against the ES server
+ * The most basic criteria holding an already formatted query string that can be
+ * executed 'as is' against the ElasticSearch client
  * 
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
 public class SimpleStringCriteria extends Criteria {
 

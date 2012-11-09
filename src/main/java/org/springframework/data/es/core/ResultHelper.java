@@ -56,8 +56,6 @@ final class ResultHelper {
 					facetEntries.add(new SimpleFacetEntry(field, entry.term(), entry.count()));
 				}
 				facetResult.put(field, new FacetPage<FacetEntry>(facetEntries));
-			} else {
-				facetResult.put(field, new FacetPage<FacetEntry>(new ArrayList<FacetEntry>()));
 			}
 		}
 		return facetResult;

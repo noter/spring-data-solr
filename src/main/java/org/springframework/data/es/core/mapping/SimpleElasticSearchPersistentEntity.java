@@ -22,7 +22,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.expression.BeanFactoryAccessor;
 import org.springframework.context.expression.BeanFactoryResolver;
-import org.springframework.data.es.ESClientFactory;
+import org.springframework.data.es.ElasticSearchClientFactory;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.util.TypeInformation;
@@ -35,7 +35,7 @@ import org.springframework.util.StringUtils;
  * @param <T>
  * @author Patryk Wąsik
  */
-public class SimpleESPersistentEntity<T> extends BasicPersistentEntity<T, ElasticSearchPersistentProperty> implements
+public class SimpleElasticSearchPersistentEntity<T> extends BasicPersistentEntity<T, ElasticSearchPersistentProperty> implements
 		ElasticSearchPersistentEntity<T>, ApplicationContextAware {
 
 	private final StandardEvaluationContext context;
@@ -48,7 +48,7 @@ public class SimpleESPersistentEntity<T> extends BasicPersistentEntity<T, Elasti
 	private String searchAnalyzer;
 	private String typeName;
 
-	public SimpleESPersistentEntity(TypeInformation<T> typeInformation) {
+	public SimpleElasticSearchPersistentEntity(TypeInformation<T> typeInformation) {
 		super(typeInformation);
 		this.context = new StandardEvaluationContext();
 		derivateESDocumentInfoFromClass(typeInformation.getType());
@@ -94,7 +94,10 @@ public class SimpleESPersistentEntity<T> extends BasicPersistentEntity<T, Elasti
 		context.addPropertyAccessor(new BeanFactoryAccessor());
 		context.setBeanResolver(new BeanFactoryResolver(applicationContext));
 		context.setRootObject(applicationContext);
-		defaultIndexName = applicationContext.getBean(ESClientFactory.class).getDefaultIndexName();
+		ElasticSearchClientFactory elasticSearchClientFactory = applicationContext.getBean(ElasticSearchClientFactory.class);
+		if (elasticSearchClientFactory != null) {
+			defaultIndexName = elasticSearchClientFactory.getDefaultIndexName();
+		}
 	}
 
 	private void derivateESDocumentInfoFromClass(Class<?> clazz) {

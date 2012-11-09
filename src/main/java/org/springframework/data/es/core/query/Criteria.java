@@ -179,7 +179,6 @@ public class Criteria implements QueryHolder {
 		Assert.notNull(field, "Field for criteria must not be null");
 		Assert.hasText(field.getName(), "Field.name for criteria must not be null/empty");
 
-		criteriaChain.add(this);
 		this.field = field;
 	}
 
@@ -198,7 +197,6 @@ public class Criteria implements QueryHolder {
 		Assert.hasText(field.getName(), "Field.name for criteria must not be null/empty");
 
 		this.criteriaChain.addAll(criteriaChain);
-		this.criteriaChain.add(this);
 		this.field = field;
 	}
 

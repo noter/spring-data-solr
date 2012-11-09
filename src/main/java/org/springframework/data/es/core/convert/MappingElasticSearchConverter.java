@@ -15,6 +15,9 @@
  */
 package org.springframework.data.es.core.convert;
 
+import java.util.List;
+import java.util.Map;
+
 import org.elasticsearch.common.mvel2.ConversionException;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
@@ -30,6 +33,7 @@ import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.util.Assert;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -37,6 +41,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author Patryk Wąsik
  */
 public class MappingElasticSearchConverter implements ElasticSearchConverter, ApplicationContextAware, InitializingBean {
+
+	interface IsEmptyMixIn {
+
+		@JsonIgnore
+		boolean isEmpty();
+	}
 
 	@SuppressWarnings("unused")
 	private ApplicationContext applicationContext;
@@ -51,7 +61,9 @@ public class MappingElasticSearchConverter implements ElasticSearchConverter, Ap
 		this.mappingContext = mappingContext;
 		conversionService = new DefaultConversionService();
 		objectMapper = new ObjectMapper();
-		objectMapper.setPropertyNamingStrategy(new ESMappingPropertyNamingStrategy(mappingContext));
+		objectMapper.addMixInAnnotations(List.class, IsEmptyMixIn.class);
+		objectMapper.addMixInAnnotations(Map.class, IsEmptyMixIn.class);
+		objectMapper.setPropertyNamingStrategy(new ElasticSearchMappingPropertyNamingStrategy(mappingContext));
 	}
 
 	@Override
@@ -87,7 +99,7 @@ public class MappingElasticSearchConverter implements ElasticSearchConverter, Ap
 		try {
 			target.append(objectMapper.writeValueAsString(source));
 		} catch (JsonProcessingException e) {
-			new ConversionException(String.format("Can't convert class '%s' to json", source.getClass().getName()), e);
+			throw new ConversionException(String.format("Can't convert class '%s' to json", source.getClass().getName()), e);
 		}
 	}
 
@@ -95,7 +107,7 @@ public class MappingElasticSearchConverter implements ElasticSearchConverter, Ap
 		try {
 			return objectMapper.readValue(source.toString(), targetTypeInformation.getType());
 		} catch (Exception e) {
-			throw new ConversionException(String.format("Can't convert json to class '%s'", source.getClass().getName()), e);
+			throw new ConversionException(String.format("Can't convert json to class '%s'", targetTypeInformation.getType().getName()), e);
 		}
 	}
 

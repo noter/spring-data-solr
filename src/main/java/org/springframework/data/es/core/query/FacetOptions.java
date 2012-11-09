@@ -28,6 +28,7 @@ import org.springframework.util.Assert;
  * Set of options that can be set on a {@link FacetQuery}
  * 
  * @author Christoph Strobl
+ * @author Patryk Wasik
  */
 public class FacetOptions {
 
@@ -35,7 +36,7 @@ public class FacetOptions {
 	public static final int DEFAULT_FACET_MIN_COUNT = 1;
 	public static final ComparatorType DEFAULT_FACET_SORT = ComparatorType.COUNT;
 
-	private int facetLimit = DEFAULT_FACET_LIMIT;
+	private Integer facetLimit = DEFAULT_FACET_LIMIT;
 	private final int facetMinCount = DEFAULT_FACET_MIN_COUNT;
 	private final List<Field> facetOnFields = new ArrayList<Field>(1);
 	private ComparatorType facetSort = DEFAULT_FACET_SORT;

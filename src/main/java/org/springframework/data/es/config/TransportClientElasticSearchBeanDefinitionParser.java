@@ -13,44 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.es.embedded.config;
+package org.springframework.data.es.config;
 
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.AbstractBeanDefinitionParser;
-import org.springframework.beans.factory.xml.BeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
-import org.springframework.data.es.embedded.support.EmbeddedSolrServerFactoryBean;
-import org.springframework.util.StringUtils;
+import org.springframework.data.es.support.TransportClientElasticSearchClientFactoryBean;
 import org.w3c.dom.Element;
 
 /**
- * Implementation of {@link BeanDefinitionParser} that parses {@code embedded-solr-server} element.
- * 
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
-public class EmbeddedSolrServerBeanDefinitionParser extends AbstractBeanDefinitionParser {
+public class TransportClientElasticSearchBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
 	@Override
 	protected AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
-		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(EmbeddedSolrServerFactoryBean.class);
-		setSolrHome(element, builder);
+		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(TransportClientElasticSearchClientFactoryBean.class);
+		setESConf(element, builder);
 		return getSourcedBeanDefinition(builder, element, parserContext);
 	}
 
-	private void setSolrHome(Element element, BeanDefinitionBuilder builder) {
-		String solrHome = element.getAttribute("solrHome");
-		if (StringUtils.hasText(solrHome)) {
-			builder.addPropertyValue("solrHome", solrHome);
-		}
-	}
-
-	private AbstractBeanDefinition getSourcedBeanDefinition(BeanDefinitionBuilder builder, Element source,
-			ParserContext context) {
+	private AbstractBeanDefinition getSourcedBeanDefinition(BeanDefinitionBuilder builder, Element source, ParserContext context) {
 
 		AbstractBeanDefinition definition = builder.getBeanDefinition();
 		definition.setSource(context.extractSource(source));
 		return definition;
 	}
 
+	private void setESConf(Element element, BeanDefinitionBuilder builder) {
+		builder.addPropertyValue("addresses", element.getAttribute("addresses"));
+		builder.addPropertyValue("ignoreClusterName", element.getAttribute("ignoreClusterName"));
+		builder.addPropertyValue("pingTimeout", element.getAttribute("pingTimeout"));
+		builder.addPropertyValue("nodeSamplerInterval", element.getAttribute("nodeSamplerInterval"));
+		builder.addPropertyValue("defaultIndexName", element.getAttribute("defaultIndexName"));
+		;
+	}
 }

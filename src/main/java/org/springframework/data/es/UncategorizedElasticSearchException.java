@@ -15,22 +15,18 @@
  */
 package org.springframework.data.es;
 
-import org.elasticsearch.client.Client;
+import org.springframework.dao.UncategorizedDataAccessException;
 
 /**
- * ESServerFactory provides access to the es client {@link Client}.
- * 
  * @author Patryk Wasik
+ * 
  */
-public interface ESClientFactory {
+public class UncategorizedElasticSearchException extends UncategorizedDataAccessException {
 
-	String getDefaultIndexName();
+	private static final long serialVersionUID = -5730097613482828069L;
 
-	/**
-	 * Get a configured ElasticSearch client
-	 * 
-	 * @return a reusable ElasticSearch client
-	 */
-	Client getElasticSearchClient();
+	public UncategorizedElasticSearchException(String msg, Throwable cause) {
+		super(msg, cause);
+	}
 
 }

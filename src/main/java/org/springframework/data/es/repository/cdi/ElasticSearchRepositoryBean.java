@@ -23,19 +23,22 @@ import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 
 import org.springframework.data.es.core.ElasticSearchOperations;
+import org.springframework.data.es.repository.ElasticSearchRepository;
+import org.springframework.data.es.repository.support.ElasticSearchRepositoryFactory;
 import org.springframework.data.repository.cdi.CdiRepositoryBean;
 import org.springframework.util.Assert;
 
 /**
- * Uses CdiRepositoryBean to create SolrRepository instances.
+ * Uses CdiRepositoryBean to create {@link ElasticSearchRepository} instances.
  * 
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
-public class SolrRepositoryBean<T> extends CdiRepositoryBean<T> {
+public class ElasticSearchRepositoryBean<T> extends CdiRepositoryBean<T> {
 
 	private final Bean<ElasticSearchOperations> esOperationsBean;
 
-	public SolrRepositoryBean(Bean<ElasticSearchOperations> operations, Set<Annotation> qualifiers, Class<T> repositoryType, BeanManager beanManager) {
+	public ElasticSearchRepositoryBean(Bean<ElasticSearchOperations> operations, Set<Annotation> qualifiers, Class<T> repositoryType,
+			BeanManager beanManager) {
 		super(qualifiers, repositoryType, beanManager);
 
 		Assert.notNull(operations, "Cannot create repository with 'null' for ElasticSearchOperations.");
@@ -50,7 +53,7 @@ public class SolrRepositoryBean<T> extends CdiRepositoryBean<T> {
 	@Override
 	protected T create(CreationalContext<T> creationalContext, Class<T> repositoryType) {
 		ElasticSearchOperations esOperations = getDependencyInstance(esOperationsBean, ElasticSearchOperations.class);
-		return new ElRepositoryFactory(solrOperations).getRepository(repositoryType);
+		return new ElasticSearchRepositoryFactory(esOperations).getRepository(repositoryType);
 	}
 
 }

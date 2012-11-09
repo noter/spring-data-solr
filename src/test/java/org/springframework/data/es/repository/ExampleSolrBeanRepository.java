@@ -15,12 +15,12 @@
  */
 package org.springframework.data.es.repository;
 
-import org.springframework.data.es.ExampleSolrBean;
+import org.springframework.data.es.ExampleElasticSearchBean;
 import org.springframework.data.es.repository.SimpleSolrRepository;
 
 /**
  * @author Christoph Strobl
  */
-public class ExampleSolrBeanRepository extends SimpleSolrRepository<ExampleSolrBean> {
+public class ExampleSolrBeanRepository extends SimpleSolrRepository<ExampleElasticSearchBean> {
 
 }

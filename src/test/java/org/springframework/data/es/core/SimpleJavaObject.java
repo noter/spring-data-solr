@@ -15,17 +15,17 @@
  */
 package org.springframework.data.es.core;
 
-import org.apache.solr.client.solrj.beans.Field;
+import org.springframework.data.es.core.mapping.ESField;
 
 /**
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
 public class SimpleJavaObject {
 
-	@Field
+	@ESField
 	private String id;
 
-	@Field
+	@ESField
 	private Long value;
 
 	public SimpleJavaObject() {
@@ -41,12 +41,12 @@ public class SimpleJavaObject {
 		return id;
 	}
 
-	public void setId(String id) {
-		this.id = id;
-	}
-
 	public Long getValue() {
 		return value;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public void setValue(Long value) {

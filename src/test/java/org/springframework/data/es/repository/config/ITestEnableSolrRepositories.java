@@ -23,7 +23,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.es.AbstractITestWithEmbeddedSolrServer;
+import org.springframework.data.es.AbstractITestWithEmbeddedElasticSearch;
 import org.springframework.data.es.core.SolrOperations;
 import org.springframework.data.es.core.SolrTemplate;
 import org.springframework.data.es.repository.config.EnableElasticSearchRepositories;
@@ -37,7 +37,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration
-public class ITestEnableSolrRepositories extends AbstractITestWithEmbeddedSolrServer {
+public class ITestEnableSolrRepositories extends AbstractITestWithEmbeddedElasticSearch {
 
 	@Configuration
 	@EnableElasticSearchRepositories

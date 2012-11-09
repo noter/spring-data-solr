@@ -101,7 +101,6 @@ public class ElasticSearchRepositoryFactory extends RepositoryFactorySupport {
 	protected Object getTargetRepository(RepositoryMetadata metadata) {
 		SimpleElasticSearchRepository repository = new SimpleElasticSearchRepository(getEntityInformation(metadata.getDomainType()),
 				elasticSearchOperations);
-		repository.setEntityClass(metadata.getDomainType());
 		return repository;
 	}
 

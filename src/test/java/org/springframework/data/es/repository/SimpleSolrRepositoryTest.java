@@ -26,7 +26,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.data.es.ExampleSolrBean;
+import org.springframework.data.es.ExampleElasticSearchBean;
 import org.springframework.data.es.core.SolrOperations;
 import org.springframework.data.es.core.SolrTemplate;
 import org.springframework.data.es.core.query.Query;
@@ -39,32 +39,32 @@ import org.springframework.data.es.repository.SimpleSolrRepository;
 @RunWith(MockitoJUnitRunner.class)
 public class SimpleSolrRepositoryTest {
 
-	private SimpleSolrRepository<ExampleSolrBean> repository;
+	private SimpleSolrRepository<ExampleElasticSearchBean> repository;
 
 	@Mock
 	private SolrOperations solrOperationsMock;
 
 	@Before
 	public void setUp() {
-		repository = new SimpleSolrRepository<ExampleSolrBean>(solrOperationsMock, ExampleSolrBean.class);
+		repository = new SimpleSolrRepository<ExampleElasticSearchBean>(solrOperationsMock, ExampleElasticSearchBean.class);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testInitRepositoryWithNullSolrOperations() {
-		new SimpleSolrRepository<ExampleSolrBean>(null);
+		new SimpleSolrRepository<ExampleElasticSearchBean>(null);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testInitRepositoryWithNullEntityClass() {
-		new SimpleSolrRepository<ExampleSolrBean>(new SolrTemplate(new HttpSolrServer("http://localhost:8080/solr"), null),
+		new SimpleSolrRepository<ExampleElasticSearchBean>(new SolrTemplate(new HttpSolrServer("http://localhost:8080/solr"), null),
 				null);
 	}
 
 	@Test
 	public void testInitRepository() {
-		repository = new SimpleSolrRepository<ExampleSolrBean>(new SolrTemplate(new HttpSolrServer(
-				"http://localhost:8080/solr"), null), ExampleSolrBean.class);
-		Assert.assertEquals(ExampleSolrBean.class, repository.getEntityClass());
+		repository = new SimpleSolrRepository<ExampleElasticSearchBean>(new SolrTemplate(new HttpSolrServer(
+				"http://localhost:8080/solr"), null), ExampleElasticSearchBean.class);
+		Assert.assertEquals(ExampleElasticSearchBean.class, repository.getEntityClass());
 	}
 
 	@Test
@@ -76,7 +76,7 @@ public class SimpleSolrRepositoryTest {
 
 		Mockito.verify(solrOperationsMock, Mockito.times(1)).executeCount(captor.capture());
 		Mockito.verify(solrOperationsMock, Mockito.times(1)).executeListQuery(captor.capture(),
-				Mockito.eq(ExampleSolrBean.class));
+				Mockito.eq(ExampleElasticSearchBean.class));
 
 		Assert.assertEquals(Query.DEFAULT_PAGE_SIZE, captor.getAllValues().get(0).getPageRequest().getPageSize());
 		Assert.assertEquals(12345, captor.getAllValues().get(1).getPageRequest().getPageSize());

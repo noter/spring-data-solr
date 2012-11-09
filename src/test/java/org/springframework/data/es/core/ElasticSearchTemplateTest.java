@@ -55,7 +55,7 @@ import org.springframework.data.es.core.query.SimpleQuery;
  * @author Christoph Strobl
  */
 @RunWith(MockitoJUnitRunner.class)
-public class SolrTemplateTest {
+public class ElasticSearchTemplateTest {
 
 	private SolrTemplate solrTemplate;
 

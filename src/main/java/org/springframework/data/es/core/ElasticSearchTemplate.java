@@ -22,10 +22,12 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.elasticsearch.ElasticSearchException;
+import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.deletebyquery.DeleteByQueryResponse;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -42,15 +44,15 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.es.ESClientFactory;
-import org.springframework.data.es.TransportClientESClientFactory;
-import org.springframework.data.es.UncategorizedESException;
+import org.springframework.data.es.ElasticSearchClientFactory;
+import org.springframework.data.es.TransportClientElasticSearchFactory;
+import org.springframework.data.es.UncategorizedElasticSearchException;
 import org.springframework.data.es.core.convert.ElasticSearchConverter;
 import org.springframework.data.es.core.convert.MappingElasticSearchConverter;
 import org.springframework.data.es.core.mapping.ElasticSearchPersistentEntity;
 import org.springframework.data.es.core.mapping.ElasticSearchPersistentProperty;
-import org.springframework.data.es.core.mapping.SimpleESMappingContext;
-import org.springframework.data.es.core.query.ESDataQuery;
+import org.springframework.data.es.core.mapping.SimpleElasticSearchMappingContext;
+import org.springframework.data.es.core.query.ElasticSearchDataQuery;
 import org.springframework.data.es.core.query.FacetQuery;
 import org.springframework.data.es.core.query.Query;
 import org.springframework.data.es.core.query.result.FacetPage;
@@ -66,7 +68,7 @@ import org.springframework.util.Assert;
 public class ElasticSearchTemplate implements ElasticSearchOperations, InitializingBean, ApplicationContextAware {
 
 	private static final QueryParser DEFAULT_QUERY_PARSER = new QueryParser();
-	private static final PersistenceExceptionTranslator exceptionTranslator = new ESExceptionTranslator();
+	private static final PersistenceExceptionTranslator exceptionTranslator = new ElasticSearchExceptionTranslator();
 
 	@SuppressWarnings("serial")
 	private static final List<String> ITERABLE_CLASSES = new ArrayList<String>() {
@@ -84,7 +86,7 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 	}
 
 	private static final ElasticSearchConverter getDefaultESConverter() {
-		MappingElasticSearchConverter converter = new MappingElasticSearchConverter(new SimpleESMappingContext());
+		MappingElasticSearchConverter converter = new MappingElasticSearchConverter(new SimpleElasticSearchMappingContext());
 		converter.afterPropertiesSet(); // have to call this one to initialize
 										// default converters
 		return converter;
@@ -92,7 +94,7 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 
 	private final ElasticSearchConverter elasticSearchConverter;
 
-	private final ESClientFactory esClientFactory;
+	private final ElasticSearchClientFactory esClientFactory;
 
 	private QueryParser queryParser = DEFAULT_QUERY_PARSER;
 
@@ -101,14 +103,14 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 	}
 
 	public ElasticSearchTemplate(Client client, String defaultIndexName) {
-		this(new TransportClientESClientFactory(client, defaultIndexName));
+		this(new TransportClientElasticSearchFactory(client, defaultIndexName));
 	}
 
-	public ElasticSearchTemplate(ESClientFactory esClientFactory) {
+	public ElasticSearchTemplate(ElasticSearchClientFactory esClientFactory) {
 		this(esClientFactory, null);
 	}
 
-	public ElasticSearchTemplate(ESClientFactory esClientFactory, ElasticSearchConverter elasticSearchConverter) {
+	public ElasticSearchTemplate(ElasticSearchClientFactory esClientFactory, ElasticSearchConverter elasticSearchConverter) {
 		Assert.notNull(esClientFactory, "ESClientFactory must not be 'null'.");
 		Assert.notNull(esClientFactory.getElasticSearchClient(), "ESClientFactory has to return a Client.");
 
@@ -137,36 +139,36 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 	}
 
 	@Override
-	public long count(final ESDataQuery query, Class<?>... types) {
+	public long count(final ElasticSearchDataQuery query, Class<?>... types) {
 		Assert.notNull(query, "Query must not be 'null'.");
 
 		return countInternal(query, indicateNames(types), types);
 	}
 
 	@Override
-	public long count(ESDataQuery query, String... indices) {
+	public long count(ElasticSearchDataQuery query, String... indices) {
 		return countInternal(query, indices, new Class[0]);
 	}
 
 	@Override
-	public long count(ESDataQuery query, String[] indices, Class<?>... types) {
+	public long count(ElasticSearchDataQuery query, String[] indices, Class<?>... types) {
 		return countInternal(query, indices, types);
 	}
 
 	@Override
-	public DeleteByQueryResponse delete(final ESDataQuery query, final Class<?>... type) {
+	public DeleteByQueryResponse delete(final ElasticSearchDataQuery query, final Class<?>... type) {
 		Assert.notNull(query, "Query must not be 'null'.");
 		return deleteInternal(query, new String[0], type);
 
 	}
 
 	@Override
-	public DeleteByQueryResponse delete(ESDataQuery query, String... indices) {
+	public DeleteByQueryResponse delete(ElasticSearchDataQuery query, String... indices) {
 		return deleteInternal(query, indices, new Class[0]);
 	}
 
 	@Override
-	public DeleteByQueryResponse delete(ESDataQuery query, String[] indices, Class<?>... types) {
+	public DeleteByQueryResponse delete(ElasticSearchDataQuery query, String[] indices, Class<?>... types) {
 		return deleteInternal(query, indices, types);
 	}
 
@@ -208,7 +210,7 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 			return action.doInES(getElasticSearchClient());
 		} catch (Exception e) {
 			DataAccessException resolved = getExceptionTranslator().translateExceptionIfPossible(new RuntimeException(e.getMessage(), e));
-			throw resolved == null ? new UncategorizedESException(e.getMessage(), e) : resolved;
+			throw resolved == null ? new UncategorizedElasticSearchException(e.getMessage(), e) : resolved;
 		}
 	}
 
@@ -256,6 +258,21 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 	}
 
 	@Override
+	public <T> T findById(final String id, final Class<T> clazz) {
+		return execute(new ElasticSearchCallback<T>() {
+
+			@Override
+			public T doInES(Client client) throws ElasticSearchException, IOException {
+				GetResponse getResponse = client.prepareGet(indicateName(clazz), typeName(clazz), id).execute().actionGet();
+				if (getResponse.exists()) {
+					return convertESJsonSourceToBean(getResponse.getSourceAsString(), clazz);
+				}
+				return null;
+			}
+		});
+	}
+
+	@Override
 	public <T> T findOne(final Query query, final Class<T> clazz) {
 		Assert.notNull(query, "Query must not be 'null'.");
 		Assert.notNull(clazz, "Target class must not be 'null'.");
@@ -288,7 +305,7 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 	}
 
 	@Override
-	public final SearchResponse query(final ESDataQuery query) {
+	public final SearchResponse query(final ElasticSearchDataQuery query) {
 		Assert.notNull(query, "Query must not be 'null'");
 
 		return execute(new ElasticSearchCallback<SearchResponse>() {
@@ -301,13 +318,31 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 	}
 
 	@Override
+	public void refresh(final Class<?>... types) {
+		refresh(indicateNames(types));
+	}
+
+	@Override
+	public void refresh(final String... indices) {
+		execute(new ElasticSearchCallback<Void>() {
+
+			@Override
+			public Void doInES(Client client) throws ElasticSearchException, IOException {
+				client.admin().indices().refresh(new RefreshRequest(indices)).actionGet();
+				return null;
+			}
+		});
+
+	}
+
+	@Override
 	public BulkResponse save(final Collection<?> beansToAdd) {
 		return execute(new ElasticSearchCallback<BulkResponse>() {
 			@Override
 			public BulkResponse doInES(Client client) throws ElasticSearchException, IOException {
 				BulkRequestBuilder prepareBulk = client.prepareBulk();
 				for (Object object : beansToAdd) {
-					prepareBulk.add(prepareIndex(client, object).setSource(convertBeanToESJsonSource(object)));
+					prepareBulk.add(prepareIndex(client, object).setId(beanToId(object)).setSource(convertBeanToESJsonSource(object)));
 				}
 				return prepareBulk.execute().actionGet();
 			}
@@ -322,7 +357,8 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 
 			@Override
 			public IndexResponse doInES(Client client) throws ElasticSearchException, IOException {
-				return prepareIndex(client, objectToAdd).setSource(convertBeanToESJsonSource(objectToAdd)).execute().actionGet();
+				return prepareIndex(client, objectToAdd).setId(beanToId(objectToAdd)).setSource(convertBeanToESJsonSource(objectToAdd)).execute()
+						.actionGet();
 			}
 
 		});
@@ -341,7 +377,7 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 		}
 	}
 
-	DeleteByQueryResponse deleteInternal(final ESDataQuery query, String[] indices, final Class<?>[] types) {
+	DeleteByQueryResponse deleteInternal(final ElasticSearchDataQuery query, String[] indices, final Class<?>[] types) {
 		return execute(new ElasticSearchCallback<DeleteByQueryResponse>() {
 
 			@Override
@@ -353,6 +389,10 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 		});
 	}
 
+	private String beanToId(Object bean) {
+		return (String) BeanWrapper.create(bean, null).getProperty(getMappingContext().getPersistentEntity(bean.getClass()).getIdProperty());
+	}
+
 	private <T> List<T> convertSearchResponse(SearchResponse searchResponse, Class<T> clazz) {
 		List<T> list = new ArrayList<T>();
 		for (SearchHit searchHit : searchResponse.getHits()) {
@@ -361,7 +401,7 @@ public class ElasticSearchTemplate implements ElasticSearchOperations, Initializ
 		return list;
 	}
 
-	private long countInternal(final ESDataQuery query, final String[] indices, final Class<?>[] types) {
+	private long countInternal(final ElasticSearchDataQuery query, final String[] indices, final Class<?>[] types) {
 		return execute(new ElasticSearchCallback<Long>() {
 
 			@Override

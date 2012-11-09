@@ -21,14 +21,14 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.data.es.AbstractITestWithEmbeddedSolrServer;
-import org.springframework.data.es.ExampleSolrBean;
+import org.springframework.data.es.AbstractITestWithEmbeddedElasticSearch;
+import org.springframework.data.es.ExampleElasticSearchBean;
 import org.springframework.data.es.core.SolrTemplate;
 
 /**
  * @author Christoph Strobl
  */
-public class ITestSimpleSolrRepository extends AbstractITestWithEmbeddedSolrServer {
+public class ITestSimpleSolrRepository extends AbstractITestWithEmbeddedElasticSearch {
 
 	private ExampleSolrBeanRepository repository;
 
@@ -40,14 +40,14 @@ public class ITestSimpleSolrRepository extends AbstractITestWithEmbeddedSolrServ
 
 	@Test
 	public void testBeanLifecyle() {
-		ExampleSolrBean toInsert = createDefaultExampleBean();
-		ExampleSolrBean savedBean = repository.save(toInsert);
+		ExampleElasticSearchBean toInsert = createDefaultExampleBean();
+		ExampleElasticSearchBean savedBean = repository.save(toInsert);
 
 		Assert.assertSame(toInsert, savedBean);
 
 		Assert.assertTrue(repository.exists(savedBean.getId()));
 
-		ExampleSolrBean retrieved = repository.findOne(savedBean.getId());
+		ExampleElasticSearchBean retrieved = repository.findOne(savedBean.getId());
 		Assert.assertNotNull(retrieved);
 		Assert.assertEquals(savedBean, retrieved);
 
@@ -65,7 +65,7 @@ public class ITestSimpleSolrRepository extends AbstractITestWithEmbeddedSolrServ
 	@Test
 	public void testListFunctions() {
 		int objectCount = 100;
-		List<ExampleSolrBean> toInsert = new ArrayList<ExampleSolrBean>(objectCount);
+		List<ExampleElasticSearchBean> toInsert = new ArrayList<ExampleElasticSearchBean>(objectCount);
 		for (int i = 0; i < 100; i++) {
 			toInsert.add(createExampleBeanWithId(Integer.toString(i)));
 		}
@@ -75,7 +75,7 @@ public class ITestSimpleSolrRepository extends AbstractITestWithEmbeddedSolrServ
 		Assert.assertEquals(objectCount, repository.count());
 
 		int counter = 0;
-		for (ExampleSolrBean retrievedBean : repository.findAll()) {
+		for (ExampleElasticSearchBean retrievedBean : repository.findAll()) {
 			Assert.assertEquals(toInsert.get(counter), retrievedBean);
 			counter++;
 			if (counter > objectCount) {

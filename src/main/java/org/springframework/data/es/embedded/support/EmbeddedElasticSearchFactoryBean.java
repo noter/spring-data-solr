@@ -15,41 +15,41 @@
  */
 package org.springframework.data.es.embedded.support;
 
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
+import org.elasticsearch.client.Client;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.data.es.embedded.EmbeddedSolrServerFactory;
+import org.springframework.data.es.embedded.EmbeddedElasticSearchFactory;
 
 /**
- * Implementation of {@link FactoryBean} for registration of an EmbeddedSolrServer as a Spring bean. Implements
- * {@link DisposableBean} to shut down the core container when the enclosing Spring container is destroyed.
+ * Implementation of {@link FactoryBean} for registration of an {@link Client}
+ * running in local mode as a Spring bean. Implements {@link DisposableBean} to
+ * shut down the core container when the enclosing Spring container is
+ * destroyed.
  * 
- * @author Christoph Strobl
+ * @author Patryk Wasik
  * 
  */
-public class EmbeddedSolrServerFactoryBean extends EmbeddedSolrServerFactory implements FactoryBean<SolrServer>,
-		InitializingBean, DisposableBean {
-
-	@Override
-	public void destroy() throws Exception {
-		shutdownSolrServer();
-	}
+public class EmbeddedElasticSearchFactoryBean extends EmbeddedElasticSearchFactory implements FactoryBean<Client>, InitializingBean, DisposableBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		initSolrServer();
+		initElasticSearchNode();
 	}
 
 	@Override
-	public SolrServer getObject() throws Exception {
-		return getSolrServer();
+	public void destroy() throws Exception {
+		shutdown();
 	}
 
 	@Override
-	public Class<? extends SolrServer> getObjectType() {
-		return EmbeddedSolrServer.class;
+	public Client getObject() throws Exception {
+		return getElasticSearchClient();
+	}
+
+	@Override
+	public Class<Client> getObjectType() {
+		return Client.class;
 	}
 
 	@Override

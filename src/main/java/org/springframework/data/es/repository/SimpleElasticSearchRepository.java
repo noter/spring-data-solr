@@ -15,8 +15,6 @@
  */
 package org.springframework.data.es.repository;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,11 +32,12 @@ import org.springframework.data.es.core.query.MatchAllCriteria;
 import org.springframework.data.es.core.query.SimpleFilterQuery;
 import org.springframework.data.es.core.query.SimpleQuery;
 import org.springframework.data.es.repository.query.ElasticSearchEntityInformation;
+import org.springframework.data.es.repository.support.ElasticSearchRepositoryFactory;
 import org.springframework.util.Assert;
 
 /**
- * Solr specific repository implementation. Likely to be used as target within
- * {@link SolrRepositoryFactory}
+ * ElasticSearch specific repository implementation. Likely to be used as target
+ * within {@link ElasticSearchRepositoryFactory}
  * 
  * @param <T>
  * 
@@ -46,36 +45,21 @@ import org.springframework.util.Assert;
  */
 public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudRepository<T, String> {
 
-	private static final String DEFAULT_ID_FIELD = "id";
+	private final ElasticSearchOperations elasticSearchOperations;
+	private final Class<T> entityClass;
+	private final ElasticSearchEntityInformation<T, String> entityInformation;
 
-	private ElasticSearchOperations elasticSearchOperations;
-	private Class<T> entityClass;
-	private ElasticSearchEntityInformation<T, String> entityInformation;
-	private String idFieldName = DEFAULT_ID_FIELD;
-
-	public SimpleElasticSearchRepository() {
-
-	}
+	private final String idFieldName;
 
 	public SimpleElasticSearchRepository(ElasticSearchEntityInformation<T, String> metadata, ElasticSearchOperations elasticSearchOperations) {
-		this(elasticSearchOperations);
 		Assert.notNull(metadata);
+		Assert.notNull(elasticSearchOperations);
+
+		this.elasticSearchOperations = elasticSearchOperations;
 
 		this.entityInformation = metadata;
-		setIdFieldName(this.entityInformation.getIdAttribute());
-		setEntityClass(this.entityInformation.getJavaType());
-	}
-
-	public SimpleElasticSearchRepository(ElasticSearchOperations solrOperations) {
-		Assert.notNull(solrOperations);
-
-		this.setElasticSearchOperations(solrOperations);
-	}
-
-	public SimpleElasticSearchRepository(ElasticSearchOperations solrOperations, Class<T> entityClass) {
-		this(solrOperations);
-
-		this.setEntityClass(entityClass);
+		idFieldName = this.entityInformation.getIdAttribute();
+		entityClass = this.entityInformation.getJavaType();
 	}
 
 	@Override
@@ -91,18 +75,17 @@ public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudReposi
 		for (T entity : entities) {
 			idsToDelete.add(extractIdFromBean(entity));
 		}
-		this.elasticSearchOperations.executeDeleteById(idsToDelete);
-		this.elasticSearchOperations.executeCommit();
+		getElasticSearchOperations().deleteById(idsToDelete, entityClass);
 	}
 
 	@Override
 	public void delete(String id) {
 		Assert.notNull(id, "Cannot delete entity with id 'null'.");
 
-		this.elasticSearchOperations.executeDeleteById(id);
-		this.elasticSearchOperations.executeCommit();
+		getElasticSearchOperations().deleteById(id, entityClass);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void delete(T entity) {
 		Assert.notNull(entity, "Cannot delete 'null' entity.");
@@ -112,8 +95,7 @@ public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudReposi
 
 	@Override
 	public void deleteAll() {
-		this.elasticSearchOperations.executeDelete(new SimpleFilterQuery(new Criteria(Criteria.WILDCARD).expression(Criteria.WILDCARD)));
-		this.elasticSearchOperations.executeCommit();
+		getElasticSearchOperations().delete(new SimpleFilterQuery(new MatchAllCriteria()), entityClass);
 	}
 
 	@Override
@@ -135,13 +117,12 @@ public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudReposi
 		org.springframework.data.es.core.query.Query query = new SimpleQuery(new Criteria(this.idFieldName).in(ids));
 		query.setPageRequest(new PageRequest(0, Math.max(1, (int) count(query))));
 
-		return getSolrOperations().executeListQuery(query, getEntityClass());
+		return getElasticSearchOperations().findAll(query, getEntityClass());
 	}
 
 	@Override
 	public Page<T> findAll(Pageable pageable) {
-		return getSolrOperations().executeListQuery(
-				new SimpleQuery(new Criteria(Criteria.WILDCARD).expression(Criteria.WILDCARD)).setPageRequest(pageable), getEntityClass());
+		return getElasticSearchOperations().findAll(new SimpleQuery(new MatchAllCriteria()).setPageRequest(pageable), getEntityClass());
 	}
 
 	@Override
@@ -150,14 +131,13 @@ public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudReposi
 		if (itemCount == 0) {
 			return new PageImpl<T>(Collections.<T> emptyList());
 		}
-		return getSolrOperations().executeListQuery(
-				new SimpleQuery(new Criteria(Criteria.WILDCARD).expression(Criteria.WILDCARD)).setPageRequest(
-						new PageRequest(0, Math.max(1, itemCount))).addSort(sort), getEntityClass());
+		return getElasticSearchOperations().findAll(
+				new SimpleQuery(new MatchAllCriteria()).setPageRequest(new PageRequest(0, Math.max(1, itemCount))).addSort(sort), getEntityClass());
 	}
 
 	@Override
 	public T findOne(String id) {
-		return (T) getSolrOperations().executeObjectQuery(new SimpleQuery(new Criteria(this.idFieldName).is(id)), getEntityClass());
+		return getElasticSearchOperations().findOne(new SimpleQuery(new Criteria(this.idFieldName).is(id)), getEntityClass());
 	}
 
 	public final ElasticSearchOperations getElasticSearchOperations() {
@@ -165,13 +145,6 @@ public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudReposi
 	}
 
 	public Class<T> getEntityClass() {
-		if (!isEntityClassSet()) {
-			try {
-				this.entityClass = resolveReturnedClassFromGernericType();
-			} catch (Exception e) {
-				throw new InvalidDataAccessApiUsageException("Unable to resolve EntityClass. Please use according setter!", e);
-			}
-		}
 		return entityClass;
 	}
 
@@ -187,8 +160,7 @@ public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudReposi
 			throw new InvalidDataAccessApiUsageException("Entities have to be inside a collection");
 		}
 
-		this.elasticSearchOperations.executeAddBeans((Collection<? extends T>) entities);
-		this.elasticSearchOperations.executeCommit();
+		getElasticSearchOperations().save((Collection<? extends T>) entities);
 		return entities;
 	}
 
@@ -196,70 +168,17 @@ public class SimpleElasticSearchRepository<T> implements ElasticSearchCrudReposi
 	public <S extends T> S save(S entity) {
 		Assert.notNull(entity, "Cannot save 'null' entity.");
 
-		this.elasticSearchOperations.executeAddBean(entity);
-		this.elasticSearchOperations.executeCommit();
+		getElasticSearchOperations().save(entity);
 		return entity;
-	}
-
-	public final void setElasticSearchOperations(ElasticSearchOperations elasticSearchOperations) {
-		Assert.notNull(elasticSearchOperations, "SolrOperations must not be null.");
-
-		this.elasticSearchOperations = elasticSearchOperations;
-	}
-
-	public final void setEntityClass(Class<T> entityClass) {
-		Assert.notNull(entityClass, "EntityClass must not be null.");
-
-		this.entityClass = entityClass;
-	}
-
-	public final void setIdFieldName(String idFieldName) {
-		Assert.notNull(idFieldName, "ID Field cannot be null.");
-
-		this.idFieldName = idFieldName;
 	}
 
 	protected long count(org.springframework.data.es.core.query.Query query) {
 		org.springframework.data.es.core.query.Query countQuery = SimpleQuery.fromQuery(query);
-		return getSolrOperations().executeCount(countQuery);
+		return getElasticSearchOperations().count(countQuery, entityClass);
 	}
 
 	private String extractIdFromBean(T entity) {
-		if (entityInformation != null) {
-			return entityInformation.getId(entity);
-		}
-
-		SolrInputDocument solrInputDocument = this.elasticSearchOperations.convertBeanToSolrInputDocument(entity);
-		return extractIdFromSolrInputDocument(solrInputDocument);
-	}
-
-	private String extractIdFromSolrInputDocument(SolrInputDocument solrInputDocument) {
-		Assert.notNull(solrInputDocument.getField(idFieldName), "Unable to find field '" + idFieldName + "' in SolrDocument.");
-		Assert.notNull(solrInputDocument.getField(idFieldName).getValue(), "ID must not be 'null'.");
-
-		return solrInputDocument.getField(idFieldName).getValue().toString();
-	}
-
-	private boolean isEntityClassSet() {
-		return entityClass != null;
-	}
-
-	@SuppressWarnings("unchecked")
-	private Class<T> resolveReturnedClassFromGernericType() {
-		ParameterizedType parameterizedType = resolveReturnedClassFromGernericType(getClass());
-		return (Class<T>) parameterizedType.getActualTypeArguments()[0];
-	}
-
-	private ParameterizedType resolveReturnedClassFromGernericType(Class<?> clazz) {
-		Object genericSuperclass = clazz.getGenericSuperclass();
-		if (genericSuperclass instanceof ParameterizedType) {
-			ParameterizedType parameterizedType = (ParameterizedType) genericSuperclass;
-			Type rawtype = parameterizedType.getRawType();
-			if (SimpleElasticSearchRepository.class.equals(rawtype)) {
-				return parameterizedType;
-			}
-		}
-		return resolveReturnedClassFromGernericType(clazz.getSuperclass());
+		return entityInformation.getId(entity);
 	}
 
 }

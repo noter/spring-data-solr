@@ -26,7 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.domain.Sort.Order;
-import org.springframework.data.es.core.query.ESDataQuery;
+import org.springframework.data.es.core.query.ElasticSearchDataQuery;
 import org.springframework.data.es.core.query.FacetOptions;
 import org.springframework.data.es.core.query.FacetQuery;
 import org.springframework.data.es.core.query.Field;
@@ -40,7 +40,7 @@ import org.springframework.util.CollectionUtils;
  * {@link SearchRequestBuilder}. All Query parameters are translated into the
  * according SearchRequestBuilder fields.
  * 
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
 public class QueryParser {
 
@@ -50,7 +50,7 @@ public class QueryParser {
 	 * @param query
 	 * @return
 	 */
-	public final SearchRequestBuilder constructESSearchQuery(ESDataQuery query, Client client) {
+	public final SearchRequestBuilder constructESSearchQuery(ElasticSearchDataQuery query, Client client) {
 		Assert.notNull(query, "Cannot construct solrQuery from null value.");
 		Assert.notNull(query.getCriteria(), "Query has to have a criteria.");
 
@@ -76,7 +76,7 @@ public class QueryParser {
 	 * @param query
 	 * @return
 	 */
-	public QueryBuilder getESQuery(ESDataQuery query) {
+	public QueryBuilder getESQuery(ElasticSearchDataQuery query) {
 		if (query.getCriteria() == null) {
 			return null;
 		}
@@ -89,7 +89,7 @@ public class QueryParser {
 			return;
 		}
 		for (Field field : facetOptions.getFacetOnFields()) {
-			searchRequestBuilder.addFacet(FacetBuilders.termsFacet(field.getName()).size(facetOptions.getFacetLimit())
+			searchRequestBuilder.addFacet(FacetBuilders.termsFacet(field.getName()).field(field.getName()).size(facetOptions.getFacetLimit())
 					.order(facetOptions.getFacetSort()));
 		}
 	}
@@ -99,7 +99,9 @@ public class QueryParser {
 			return;
 		}
 		for (FilterQuery filterQuery : filterQueries) {
-			searchRequestBuilder.setFilter(filterQuery.getCriteria().getFilterBuilder());
+			if (filterQuery.getCriteria() != null) {
+				searchRequestBuilder.setFilter(filterQuery.getCriteria().getFilterBuilder());
+			}
 		}
 	}
 
@@ -116,7 +118,7 @@ public class QueryParser {
 			return;
 		}
 		for (Field field : fields) {
-			searchRequestBuilder.addFacet(FacetBuilders.termsFacet(field.getName()));
+			searchRequestBuilder.addFacet(FacetBuilders.termsFacet(field.getName()).field(field.getName()));
 		}
 	}
 

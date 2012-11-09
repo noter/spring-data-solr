@@ -29,25 +29,15 @@ import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.ProcessBean;
 
-import org.springframework.data.es.core.SolrOperations;
+import org.springframework.data.es.core.ElasticSearchOperations;
 import org.springframework.data.repository.cdi.CdiRepositoryExtensionSupport;
 
 /**
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
-public class SolrRepositoryExtension extends CdiRepositoryExtensionSupport {
+public class ElasticSearchRepositoryExtension extends CdiRepositoryExtensionSupport {
 
-	private final Map<String, Bean<SolrOperations>> solrOperationsMap = new HashMap<String, Bean<SolrOperations>>();
-
-	@SuppressWarnings("unchecked")
-	<T> void processBean(@Observes ProcessBean<T> processBean) {
-		Bean<T> bean = processBean.getBean();
-		for (Type type : bean.getTypes()) {
-			if (type instanceof Class<?> && SolrOperations.class.isAssignableFrom((Class<?>) type)) {
-				solrOperationsMap.put(bean.getQualifiers().toString(), ((Bean<SolrOperations>) bean));
-			}
-		}
-	}
+	private final Map<String, Bean<ElasticSearchOperations>> esOperationsMap = new HashMap<String, Bean<ElasticSearchOperations>>();
 
 	void afterBeanDiscovery(@Observes AfterBeanDiscovery afterBeanDiscovery, BeanManager beanManager) {
 		for (Entry<Class<?>, Set<Annotation>> entry : getRepositoryTypes()) {
@@ -60,15 +50,25 @@ public class SolrRepositoryExtension extends CdiRepositoryExtensionSupport {
 		}
 	}
 
-	private <T> Bean<T> createRepositoryBean(Class<T> repositoryType, Set<Annotation> qualifiers, BeanManager beanManager) {
-		Bean<SolrOperations> solrOperationBeans = this.solrOperationsMap.get(qualifiers.toString());
+	@SuppressWarnings("unchecked")
+	<T> void processBean(@Observes ProcessBean<T> processBean) {
+		Bean<T> bean = processBean.getBean();
+		for (Type type : bean.getTypes()) {
+			if ((type instanceof Class<?>) && ElasticSearchOperations.class.isAssignableFrom((Class<?>) type)) {
+				esOperationsMap.put(bean.getQualifiers().toString(), ((Bean<ElasticSearchOperations>) bean));
+			}
+		}
+	}
 
-		if (solrOperationBeans == null) {
+	private <T> Bean<T> createRepositoryBean(Class<T> repositoryType, Set<Annotation> qualifiers, BeanManager beanManager) {
+		Bean<ElasticSearchOperations> esOperationBeans = esOperationsMap.get(qualifiers.toString());
+
+		if (esOperationBeans == null) {
 			throw new UnsatisfiedResolutionException(String.format("Unable to resolve a bean for '%s' with qualifiers %s.",
-					SolrOperations.class.getName(), qualifiers));
+					ElasticSearchOperations.class.getName(), qualifiers));
 		}
 
-		return new SolrRepositoryBean<T>(solrOperationBeans, qualifiers, repositoryType, beanManager);
+		return new ElasticSearchRepositoryBean<T>(esOperationBeans, qualifiers, repositoryType, beanManager);
 	}
 
 }

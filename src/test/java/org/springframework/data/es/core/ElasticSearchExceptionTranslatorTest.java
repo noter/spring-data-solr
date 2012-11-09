@@ -33,7 +33,7 @@ import org.springframework.data.es.core.SolrExceptionTranslator;
  * @author Christoph Strobl
  * 
  */
-public class SolrExceptionTranslatorTest {
+public class ElasticSearchExceptionTranslatorTest {
 
 	private SolrExceptionTranslator exceptionTranslator = new SolrExceptionTranslator();
 

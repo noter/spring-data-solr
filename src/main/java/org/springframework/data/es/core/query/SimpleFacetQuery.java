@@ -51,7 +51,7 @@ public class SimpleFacetQuery extends SimpleQuery implements FacetQuery {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public final <T extends ESDataQuery> T setFacetOptions(FacetOptions facetOptions) {
+	public final <T extends ElasticSearchDataQuery> T setFacetOptions(FacetOptions facetOptions) {
 		if (facetOptions != null) {
 			Assert.isTrue(facetOptions.hasFields(), "Cannot set facet options having no fields.");
 		}

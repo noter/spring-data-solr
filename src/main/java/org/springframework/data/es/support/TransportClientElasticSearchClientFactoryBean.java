@@ -23,13 +23,13 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.data.es.TransportClientESClientFactory;
+import org.springframework.data.es.TransportClientElasticSearchFactory;
 import org.springframework.util.Assert;
 
 /**
  * @author Patryk Wasik
  */
-public class TransportClientESClientFactoryBean extends TransportClientESClientFactory implements FactoryBean<Client>, InitializingBean,
+public class TransportClientElasticSearchClientFactoryBean extends TransportClientElasticSearchFactory implements FactoryBean<Client>, InitializingBean,
 		DisposableBean {
 
 	private InetSocketTransportAddress[] addresses;

@@ -17,16 +17,15 @@ package org.springframework.data.es.repository.config;
 
 import org.springframework.beans.factory.xml.NamespaceHandler;
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
-import org.springframework.data.es.config.TransportClientESClientBeanDefinitionParser;
-import org.springframework.data.es.embedded.config.EmbeddedSolrServerBeanDefinitionParser;
+import org.springframework.data.es.config.TransportClientElasticSearchBeanDefinitionParser;
+import org.springframework.data.es.embedded.config.EmbeddedElasticSearchBeanDefinitionParser;
 import org.springframework.data.repository.config.RepositoryBeanDefinitionParser;
 import org.springframework.data.repository.config.RepositoryConfigurationExtension;
 
 /**
  * {@link NamespaceHandler} implementation to register parser for
  * {@code <es:repositories />},
- * {@code <es:embedded-es-server esHome="path/to/es/home/directory" />}
- * elements.
+ * {@code <es:embedded-es-node defaultIndexName="indexName" />} elements.
  * 
  * @author Oliver Gierke
  * @author Christoph Strobl
@@ -46,7 +45,7 @@ class ElasticSearchRepositoryNamespaceHandler extends NamespaceHandlerSupport {
 		RepositoryBeanDefinitionParser parser = new RepositoryBeanDefinitionParser(extension);
 
 		registerBeanDefinitionParser("repositories", parser);
-		registerBeanDefinitionParser("embedded-es-server", new EmbeddedSolrServerBeanDefinitionParser());
-		registerBeanDefinitionParser("es-server", new TransportClientESClientBeanDefinitionParser());
+		registerBeanDefinitionParser("embedded-es-node", new EmbeddedElasticSearchBeanDefinitionParser());
+		registerBeanDefinitionParser("es-client", new TransportClientElasticSearchBeanDefinitionParser());
 	}
 }

@@ -41,7 +41,7 @@ public class ElasticSearchEntityInformationCreatorImpl implements ElasticSearchE
 	public <T, ID extends Serializable> ElasticSearchEntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
 		ElasticSearchPersistentEntity<T> persistentEntity = (ElasticSearchPersistentEntity<T>) mappingContext.getPersistentEntity(domainClass);
 
-		return new MappingESEntityInformation<T, ID>(persistentEntity);
+		return new MappingElasticSearchEntityInformation<T, ID>(persistentEntity);
 	}
 
 }

@@ -13,24 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.es.config;
+package org.springframework.data.es.embedded.config;
 
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.AbstractBeanDefinitionParser;
+import org.springframework.beans.factory.xml.BeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
-import org.springframework.data.es.support.TransportClientESClientFactoryBean;
+import org.springframework.data.es.embedded.support.EmbeddedElasticSearchFactoryBean;
+import org.springframework.util.StringUtils;
 import org.w3c.dom.Element;
 
 /**
+ * Implementation of {@link BeanDefinitionParser} that parses
+ * {@code embedded-es-node} element.
+ * 
  * @author Patryk Wasik
  */
-public class TransportClientESClientBeanDefinitionParser extends AbstractBeanDefinitionParser {
+public class EmbeddedElasticSearchBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
 	@Override
 	protected AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
-		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(TransportClientESClientFactoryBean.class);
-		setESConf(element, builder);
+		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(EmbeddedElasticSearchFactoryBean.class);
+		setDefaultIndexName(element, builder);
 		return getSourcedBeanDefinition(builder, element, parserContext);
 	}
 
@@ -41,12 +46,11 @@ public class TransportClientESClientBeanDefinitionParser extends AbstractBeanDef
 		return definition;
 	}
 
-	private void setESConf(Element element, BeanDefinitionBuilder builder) {
-		builder.addPropertyValue("addresses", element.getAttribute("addresses"));
-		builder.addPropertyValue("ignoreClusterName", element.getAttribute("ignoreClusterName"));
-		builder.addPropertyValue("pingTimeout", element.getAttribute("pingTimeout"));
-		builder.addPropertyValue("nodeSamplerInterval", element.getAttribute("nodeSamplerInterval"));
-		builder.addPropertyValue("defaultIndexName", element.getAttribute("defaultIndexName"));
-		;
+	private void setDefaultIndexName(Element element, BeanDefinitionBuilder builder) {
+		String defaultIndexName = element.getAttribute("defaultIndexName");
+		if (StringUtils.hasText(defaultIndexName)) {
+			builder.addPropertyValue("defaultIndexName", defaultIndexName);
+		}
 	}
+
 }

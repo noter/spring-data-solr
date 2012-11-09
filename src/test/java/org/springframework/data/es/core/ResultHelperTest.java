@@ -16,13 +16,11 @@
 package org.springframework.data.es.core;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.solr.client.solrj.response.FacetField;
-import org.apache.solr.client.solrj.response.QueryResponse;
+import org.elasticsearch.search.facet.Facets;
+import org.elasticsearch.search.facet.terms.TermsFacet;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,7 +28,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.data.domain.Page;
-import org.springframework.data.es.core.ResultHelper;
 import org.springframework.data.es.core.query.Criteria;
 import org.springframework.data.es.core.query.FacetOptions;
 import org.springframework.data.es.core.query.FacetQuery;
@@ -39,21 +36,13 @@ import org.springframework.data.es.core.query.SimpleFacetQuery;
 import org.springframework.data.es.core.query.result.FacetEntry;
 
 /**
- * @author Christoph Strobl
+ * @author Patryk Wasik
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ResultHelperTest {
 
 	@Mock
-	private QueryResponse response;
-
-	@Test
-	public void testConvertFacetQueryResponseForNullQueryResponse() {
-		Map<Field, Page<FacetEntry>> result = ResultHelper.convertFacetQueryResponseToFacetPageMap(
-				createFacetQuery("field_1"), null);
-		Assert.assertNotNull(result);
-		Assert.assertTrue(result.isEmpty());
-	}
+	private Facets facets;
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testConvertFacetQueryResponseForNullQuery() {
@@ -61,79 +50,75 @@ public class ResultHelperTest {
 	}
 
 	@Test
-	public void testConvertFacetQueryResponseForQueryWithoutFacetOptions() {
-		Map<Field, Page<FacetEntry>> result = ResultHelper.convertFacetQueryResponseToFacetPageMap(new SimpleFacetQuery(
-				new Criteria("field_1")), null);
-		Assert.assertNotNull(result);
-		Assert.assertTrue(result.isEmpty());
-	}
-
-	@Test
-	public void testConvertFacetQueryResponseForQueryResultWithNullFacetFields() {
-		Mockito.when(response.getFacetFields()).thenReturn(null);
-		Map<Field, Page<FacetEntry>> result = ResultHelper.convertFacetQueryResponseToFacetPageMap(
-				createFacetQuery("field_1"), response);
+	public void testConvertFacetQueryResponseForNullQueryResponse() {
+		Map<Field, Page<FacetEntry>> result = ResultHelper.convertFacetQueryResponseToFacetPageMap(createFacetQuery("field_1"), null);
 		Assert.assertNotNull(result);
 		Assert.assertTrue(result.isEmpty());
 	}
 
 	@Test
 	public void testConvertFacetQueryResponseForQueryResultWithEmptyFacetFields() {
-		Mockito.when(response.getFacetFields()).thenReturn(Collections.<FacetField> emptyList());
-		Map<Field, Page<FacetEntry>> result = ResultHelper.convertFacetQueryResponseToFacetPageMap(
-				createFacetQuery("field_1"), response);
+		Mockito.when(facets.facet(TermsFacet.class, "field_1")).thenReturn(null);
+		Map<Field, Page<FacetEntry>> result = ResultHelper.convertFacetQueryResponseToFacetPageMap(createFacetQuery("field_1"), facets);
 		Assert.assertNotNull(result);
 		Assert.assertTrue(result.isEmpty());
 	}
 
 	@Test
-	public void testConvertFacetQueryResponseForQueryResultWithSingleFacetFieldWithoutValues() {
-		List<FacetField> fieldList = new ArrayList<FacetField>(1);
-		FacetField ffield = new FacetField("field_1");
-		fieldList.add(ffield);
+	public void testConvertFacetQueryResponseForQueryResultWithSingeFacetField() {
 
-		Mockito.when(response.getFacetFields()).thenReturn(fieldList);
+		TermsFacet createFacetField = createFacetField("field_1", 1, 2);
+		Mockito.when(facets.facet(TermsFacet.class, "field_1")).thenReturn(createFacetField);
 
-		Map<Field, Page<FacetEntry>> result = ResultHelper.convertFacetQueryResponseToFacetPageMap(
-				createFacetQuery("field_1"), response);
+		Map<Field, Page<FacetEntry>> result = ResultHelper.convertFacetQueryResponseToFacetPageMap(createFacetQuery("field_1"), facets);
 		Assert.assertNotNull(result);
 		Assert.assertEquals(1, result.size());
 		Entry<Field, Page<FacetEntry>> resultEntry = result.entrySet().iterator().next();
 
-		Assert.assertEquals(ffield.getName(), resultEntry.getKey().getName());
+		Assert.assertEquals("field_1", resultEntry.getKey().getName());
+		Assert.assertEquals(2, resultEntry.getValue().getContent().size());
+	}
+
+	@Test
+	public void testConvertFacetQueryResponseForQueryResultWithSingleFacetFieldWithoutValues() {
+
+		TermsFacet createFacetField = createFacetField("field_1");
+		Mockito.when(facets.facet(TermsFacet.class, "field_1")).thenReturn(createFacetField);
+
+		Map<Field, Page<FacetEntry>> result = ResultHelper.convertFacetQueryResponseToFacetPageMap(createFacetQuery("field_1"), facets);
+		Assert.assertNotNull(result);
+		Assert.assertEquals(1, result.size());
+		Entry<Field, Page<FacetEntry>> resultEntry = result.entrySet().iterator().next();
+
+		Assert.assertEquals("field_1", resultEntry.getKey().getName());
 		Assert.assertTrue(resultEntry.getValue().getContent().isEmpty());
 	}
 
 	@Test
-	public void testConvertFacetQueryResponseForQueryResultWithSingeFacetField() {
-		List<FacetField> fieldList = new ArrayList<FacetField>(1);
-		FacetField ffield = createFacetField("field_1", 1, 2);
-		fieldList.add(ffield);
-
-		Mockito.when(response.getFacetFields()).thenReturn(fieldList);
-
-		Map<Field, Page<FacetEntry>> result = ResultHelper.convertFacetQueryResponseToFacetPageMap(
-				createFacetQuery("field_1"), response);
+	public void testConvertFacetQueryResponseForQueryWithoutFacetOptions() {
+		Map<Field, Page<FacetEntry>> result = ResultHelper.convertFacetQueryResponseToFacetPageMap(new SimpleFacetQuery(new Criteria("field_1")),
+				null);
 		Assert.assertNotNull(result);
-		Assert.assertEquals(1, result.size());
-		Entry<Field, Page<FacetEntry>> resultEntry = result.entrySet().iterator().next();
+		Assert.assertTrue(result.isEmpty());
+	}
 
-		Assert.assertEquals(ffield.getName(), resultEntry.getKey().getName());
-		Assert.assertEquals(2, resultEntry.getValue().getContent().size());
+	private TermsFacet createFacetField(String fieldName, long... values) {
+		TermsFacet mock = Mockito.mock(TermsFacet.class);
+		ArrayList<org.elasticsearch.search.facet.terms.TermsFacet.Entry> entries = new ArrayList<TermsFacet.Entry>();
+		for (long l : values) {
+			org.elasticsearch.search.facet.terms.TermsFacet.Entry entry = Mockito.mock(org.elasticsearch.search.facet.terms.TermsFacet.Entry.class);
+			Mockito.when(entry.term()).thenReturn("value_" + l);
+			Mockito.when(entry.count()).thenReturn((int) l);
+			entries.add(entry);
+		}
+		Mockito.when(mock.iterator()).thenReturn(entries.iterator());
+		return mock;
 	}
 
 	private FacetQuery createFacetQuery(String... facetFields) {
 		FacetQuery fq = new SimpleFacetQuery(new Criteria(facetFields[0]));
 		fq.setFacetOptions(new FacetOptions(facetFields));
 		return fq;
-	}
-
-	private FacetField createFacetField(String fieldName, long... values) {
-		FacetField ffield = new FacetField(fieldName);
-		for (int i = 1; i <= values.length; i++) {
-			ffield.add("value_" + i, values[i - 1]);
-		}
-		return ffield;
 	}
 
 }

@@ -34,9 +34,9 @@ class AbstractQuery {
 	}
 
 	@SuppressWarnings("unchecked")
-	public final <T extends ESDataQuery> T addCriteria(Criteria criteria) {
+	public final <T extends ElasticSearchDataQuery> T addCriteria(Criteria criteria) {
 		Assert.notNull(criteria, "Cannot add null criteria.");
-		if (!(criteria instanceof SimpleStringCriteria)) {
+		if (!(criteria instanceof SimpleStringCriteria) && !(criteria instanceof MatchAllCriteria)) {
 			Assert.notNull(criteria.getField(), "Cannot add criteria for null field.");
 			Assert.hasText(criteria.getField().getName(), "Criteria.field.name must not be null/empty.");
 		}

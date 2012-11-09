@@ -30,17 +30,17 @@ import org.springframework.data.repository.core.support.AbstractEntityInformatio
  * @param <ID>
  * @author Patryk Wasik
  */
-public class MappingESEntityInformation<T, ID extends Serializable> extends AbstractEntityInformation<T, ID> implements
+public class MappingElasticSearchEntityInformation<T, ID extends Serializable> extends AbstractEntityInformation<T, ID> implements
 		ElasticSearchEntityInformation<T, ID> {
 
 	private final ElasticSearchPersistentEntity<T> entityMetadata;
 	private final String indexTypeName;
 
-	public MappingESEntityInformation(ElasticSearchPersistentEntity<T> entity) {
+	public MappingElasticSearchEntityInformation(ElasticSearchPersistentEntity<T> entity) {
 		this(entity, null);
 	}
 
-	public MappingESEntityInformation(ElasticSearchPersistentEntity<T> entity, String indexTypeName) {
+	public MappingElasticSearchEntityInformation(ElasticSearchPersistentEntity<T> entity, String indexTypeName) {
 		super(entity.getType());
 		this.entityMetadata = entity;
 		this.indexTypeName = indexTypeName;

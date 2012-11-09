@@ -23,6 +23,6 @@ package org.springframework.data.es.core.query;
  * 
  * @author Patryk Wasik
  */
-public interface FilterQuery extends ESDataQuery {
+public interface FilterQuery extends ElasticSearchDataQuery {
 
 }
