@@ -1,1 +1,1 @@
-http\://www.springframework.org/schema/data/es=org.springframework.data.es.repository.config.ElasticSearchRepositoryNamespaceHandler
+http\://www.eforce.pl/schema/es=pl.eforce.spring.data.es.repository.config.ElasticSearchRepositoryNamespaceHandler
